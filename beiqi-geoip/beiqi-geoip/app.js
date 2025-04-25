@@ -3,7 +3,7 @@ const { Reader } = require('@maxmind/geoip2-node');
 const path = require('path');
 
 const app = express();
-const port = 3000;  // 你可以根据需要修改端口
+const port = process.env.PORT || 3000;  // Use PORT environment variable for Cloud Run or default to 3000 for local development
 
 // 加载 GeoLite2-City.mmdb 数据库
 const dbPath = path.join(__dirname, 'GeoLite2-City.mmdb');  // 确保数据库路径正确

@@ -115,10 +115,25 @@ Replace `YOUR_PROJECT_ID` with your actual GCP project ID.
 If you encounter any issues during deployment:
 
 1. Check the Cloud Build logs for build errors
+   - The build is configured to use Cloud Logging only (no storage bucket for logs)
+   - You can view logs in the Cloud Build console or using the GCP Logging interface
 2. Check the App Engine logs for runtime errors
 3. Verify that all necessary APIs are enabled
 4. Ensure that the Cloud SQL instance is properly configured
 5. Check that the app.yaml files have the correct configuration
+
+### Common Issues
+
+- **Service Account Error**: If you see an error about service accounts and logs bucket, make sure you're using the latest version of cloudbuild.yaml which includes the `options: { logging: CLOUD_LOGGING_ONLY }` configuration.
+
+- **GeoIP Service Port Error**: The GeoIP service needs to listen on the port specified by the PORT environment variable (typically 8080) in Cloud Run. The cloudbuild.yaml file has been updated to automatically modify the app.js file to use `const port = process.env.PORT || 3000;` instead of the hardcoded port 3000. If you're still seeing port-related errors, make sure the GeoIP service is properly configured to listen on the PORT environment variable.
+
+- **Port Configuration for Other Services**: All services have been configured to use the correct ports:
+  - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
+  - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js
+  - **beiqi-service-master/ruoyi-admin**: Already configured to use port 8080 in application-prod.yml
+  - **beiqi-service-master/ruoyi-web**: Already configured to use port 8080 in application-prod.yml
+  - **beiqi-web-master**: Serves static files through App Engine, so port configuration is not applicable
 
 ## Additional Resources
 
