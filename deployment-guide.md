@@ -128,6 +128,10 @@ If you encounter any issues during deployment:
 
 - **GeoIP Service Port Error**: The GeoIP service needs to listen on the port specified by the PORT environment variable (typically 8080) in Cloud Run. The cloudbuild.yaml file has been updated to automatically modify the app.js file to use `const port = process.env.PORT || 3000;` instead of the hardcoded port 3000. If you're still seeing port-related errors, make sure the GeoIP service is properly configured to listen on the PORT environment variable.
 
+- **Node.js Runtime Version**: The app.yaml files for Node.js services have been updated to use Node.js 20 (the latest supported version) instead of Node.js 14 (which is deprecated). If you see errors about deprecated runtimes, make sure you're using the latest versions of the app.yaml files.
+
+- **NPM Command Not Found**: The cloudbuild.yaml file has been updated to use the Node.js Docker image for steps that require npm. If you see errors about npm not being found, make sure you're using the latest version of the cloudbuild.yaml file.
+
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
   - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
   - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js
