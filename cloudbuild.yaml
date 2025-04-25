@@ -14,12 +14,12 @@ steps:
     args:
       - '-c'
       - |
-        if [ -d "./beiqi-service-master/beiqi-service-master/uploadPath" ]; then
-          gsutil -m cp -r ./beiqi-service-master/beiqi-service-master/uploadPath/* gs://baic-uploads/
-          echo "Uploads directory copied to Cloud Storage"
-        elif [ -d "./uploadPath" ]; then
+        if [ -d "./uploadPath" ]; then
           gsutil -m cp -r ./uploadPath/* gs://baic-uploads/
-          echo "Uploads directory copied to Cloud Storage"
+          echo "Uploads directory copied to Cloud Storage from ./uploadPath"
+        elif [ -d "./beiqi-service-master/beiqi-service-master/uploadPath" ]; then
+          gsutil -m cp -r ./beiqi-service-master/beiqi-service-master/uploadPath/* gs://baic-uploads/
+          echo "Uploads directory copied to Cloud Storage from ./beiqi-service-master/beiqi-service-master/uploadPath"
         else
           echo "Uploads directory not found, skipping copy"
         fi
@@ -53,6 +53,22 @@ steps:
         cd beiqi-service-master/beiqi-service-master
         # Update the database connection in application-prod.yml
         sed -i 's|jdbc:mysql:///ruoyi?cloudSqlInstance=.*&useSSL=false|jdbc:mysql:///ruoyi?cloudSqlInstance=baic-457613:us-central1:baic-mysql\&socketFactory=com.google.cloud.sql.mysql.SocketFactory\&user=ruoyi\&password=Stellies21!@\&useSSL=false|g' ruoyi-admin/src/main/resources/application-prod.yml
+        
+        # Update the file upload path to use Cloud Storage
+        if grep -q "profile:" ruoyi-admin/src/main/resources/application-prod.yml; then
+          sed -i 's|profile:.*|profile: /uploads|g' ruoyi-admin/src/main/resources/application-prod.yml
+        else
+          echo "ruoyi:" >> ruoyi-admin/src/main/resources/application-prod.yml
+          echo "  profile: /uploads" >> ruoyi-admin/src/main/resources/application-prod.yml
+        fi
+        
+        if grep -q "local-storage-path:" ruoyi-admin/src/main/resources/application-prod.yml; then
+          sed -i 's|local-storage-path:.*|local-storage-path: /uploads|g' ruoyi-admin/src/main/resources/application-prod.yml
+        else
+          echo "ufo:" >> ruoyi-admin/src/main/resources/application-prod.yml
+          echo "  local-storage-path: /uploads" >> ruoyi-admin/src/main/resources/application-prod.yml
+        fi
+        
         mvn clean package -DskipTests -f ruoyi-admin/pom.xml
         cd ruoyi-admin
         gcloud app deploy app.yaml --quiet
@@ -66,6 +82,22 @@ steps:
         cd beiqi-service-master/beiqi-service-master
         # Update the database connection in application-prod.yml
         sed -i 's|jdbc:mysql:///ruoyi?cloudSqlInstance=.*&useSSL=false|jdbc:mysql:///ruoyi?cloudSqlInstance=baic-457613:us-central1:baic-mysql\&socketFactory=com.google.cloud.sql.mysql.SocketFactory\&user=ruoyi\&password=Stellies21!@\&useSSL=false|g' ruoyi-web/src/main/resources/application-prod.yml
+        
+        # Update the file upload path to use Cloud Storage
+        if grep -q "profile:" ruoyi-web/src/main/resources/application-prod.yml; then
+          sed -i 's|profile:.*|profile: /uploads|g' ruoyi-web/src/main/resources/application-prod.yml
+        else
+          echo "ruoyi:" >> ruoyi-web/src/main/resources/application-prod.yml
+          echo "  profile: /uploads" >> ruoyi-web/src/main/resources/application-prod.yml
+        fi
+        
+        if grep -q "local-storage-path:" ruoyi-web/src/main/resources/application-prod.yml; then
+          sed -i 's|local-storage-path:.*|local-storage-path: /uploads|g' ruoyi-web/src/main/resources/application-prod.yml
+        else
+          echo "ufo:" >> ruoyi-web/src/main/resources/application-prod.yml
+          echo "  local-storage-path: /uploads" >> ruoyi-web/src/main/resources/application-prod.yml
+        fi
+        
         mvn clean package -DskipTests -f ruoyi-web/pom.xml
         cd ruoyi-web
         gcloud app deploy app.yaml --quiet

@@ -42,7 +42,9 @@ git push -u origin master
    - Cloud Storage API
    - Cloud SQL Admin API
 
-## Step 3: Use Existing Cloud SQL Instance
+## Step 3: Use Existing Cloud SQL Instance and File Uploads
+
+### Database Configuration
 
 The project is already configured to use an existing Cloud SQL instance with the following details:
 
@@ -63,6 +65,15 @@ Or connect using a MySQL client:
 ```bash
 mysql -h 34.69.17.6 -u ruoyi -p
 ```
+
+### File Uploads
+
+The project has been configured to use a Cloud Storage bucket for file uploads. The `uploadPath` directory at the root of the project contains all the uploaded files, which will be copied to a Cloud Storage bucket during deployment.
+
+The cloudbuild.yaml file has been configured to:
+1. Create a Cloud Storage bucket named `baic-uploads` if it doesn't exist
+2. Copy all files from the `uploadPath` directory to the bucket
+3. Update the application configuration to use the bucket for file storage in production
 
 ## Step 4: Set Up Cloud Build Trigger
 
