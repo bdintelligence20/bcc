@@ -132,6 +132,8 @@ If you encounter any issues during deployment:
 
 - **NPM Command Not Found**: The cloudbuild.yaml file has been updated to use the Node.js Docker image for steps that require npm. If you see errors about npm not being found, make sure you're using the latest version of the cloudbuild.yaml file.
 
+- **Missing SCSS Files**: The beiqi-home-master service requires an index.scss file in the assets/scss directory. This file has been created and added to the repository. The cloudbuild.yaml file has also been updated to create this file during the build process if it doesn't exist. If you see errors about missing SCSS files, make sure you're using the latest version of the cloudbuild.yaml file.
+
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
   - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
   - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js

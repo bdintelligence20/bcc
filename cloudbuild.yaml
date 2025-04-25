@@ -54,6 +54,18 @@ steps:
       - '-c'
       - |
         cd beiqi-home-master/beiqi-home-master
+        # Create index.scss if it doesn't exist
+        if [ ! -f "assets/scss/index.scss" ]; then
+          echo "// Import all SCSS files" > assets/scss/index.scss
+          echo "@import 'variables';" >> assets/scss/index.scss
+          echo "@import 'mixins';" >> assets/scss/index.scss
+          echo "@import 'base';" >> assets/scss/index.scss
+          echo "@import 'layout';" >> assets/scss/index.scss
+          echo "@import 'global';" >> assets/scss/index.scss
+          echo "@import 'main';" >> assets/scss/index.scss
+          echo "@import 'element-variables';" >> assets/scss/index.scss
+          echo "@import 'fonts';" >> assets/scss/index.scss
+        fi
         npm install
         npm run build
         

@@ -54,11 +54,12 @@ The project uses a Cloud Storage bucket for file uploads:
 - These files will be automatically copied to a Cloud Storage bucket during deployment
 - The application will be configured to use this bucket for file storage in production
 
-### Runtime Versions
-The project has been updated to use the latest supported runtime versions:
+### Runtime Versions and Build Process
+The project has been updated to use the latest supported runtime versions and build process:
 
 - Node.js services now use Node.js 20 instead of Node.js 14 (which is deprecated)
 - The build process has been updated to use the appropriate Docker images for each step
+- Missing SCSS files are automatically created during the build process
 
 ## Step 4: Set Up Cloud Build Trigger
 
