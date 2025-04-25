@@ -1,0 +1,109 @@
+# Quick Start Commands for BAIC Global Codebase
+
+# 1. Kill all existing processes
+sudo systemctl stop baic-admin baic-web baic-frontend baic-geoip nginx
+sudo pkill -f java
+sudo pkill -f node
+
+# 2. Create logs directory if it doesn't exist
+sudo mkdir -p /opt/baic/logs
+sudo mkdir -p /opt/baic/uploads
+sudo chown -R ubuntu:ubuntu /opt/baic
+
+# 3. Start Backend Admin Service
+cd /opt/baic/apps/beiqi-service-master/beiqi-service-master/ruoyi-admin/target/
+sudo nohup java -jar -Dspring.profiles.active=prod ruoyi-admin.jar > /opt/baic/logs/admin.log 2>&1 &
+echo "Started Admin Service"
+
+# 4. Start Backend Web Service
+cd /opt/baic/apps/beiqi-service-master/beiqi-service-master/ruoyi-web/target/
+sudo nohup java -jar -Dspring.profiles.active=prod ruoyi-web.jar > /opt/baic/logs/web.log 2>&1 &
+echo "Started Web Service"
+
+# 5. Start Frontend Service (beiqi-home-master)
+cd /opt/baic/apps/beiqi-home-master/beiqi-home-master/
+npm install
+nohup npm start > /opt/baic/logs/frontend.log 2>&1 &
+echo "Started Frontend Service"
+
+# 6. Build Admin Panel Frontend (beiqi-web-master)
+cd /opt/baic/apps/beiqi-web-master/beiqi-web-master/
+npm install
+npm run build:prod
+echo "Built Admin Panel Frontend"
+
+# 7. Start GeoIP Service
+cd /opt/baic/apps/beiqi-geoip/beiqi-geoip/
+npm install
+nohup node app.js > /opt/baic/logs/geoip.log 2>&1 &
+echo "Started GeoIP Service"
+
+# 8. Configure Nginx
+sudo tee /etc/nginx/sites-available/baic > /dev/null << 'EOF'
+server {
+    listen 80;
+    server_name 154.65.100.153;
+
+    # Main website (Nuxt.js)
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Admin panel (static files)
+    location /admin/ {
+        alias /opt/baic/apps/beiqi-web-master/beiqi-web-master/dist/;
+        try_files $uri $uri/ /admin/index.html;
+    }
+
+    # Backend API
+    location /api/ {
+        proxy_pass http://localhost:7070;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Home API
+    location /home-api/ {
+        proxy_pass http://localhost:7071;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # GeoIP service
+    location /geoip/ {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # File uploads
+    location /file/ {
+        alias /opt/baic/uploads/;
+        autoindex off;
+    }
+}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/baic /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl restart nginx
+echo "Configured and restarted Nginx"
+
+# 9. Check if services are running
+echo "Checking running processes..."
+ps aux | grep java
+ps aux | grep node
+sudo systemctl status nginx
+sudo netstat -tulpn | grep LISTEN
+
+echo "Setup complete! The application should now be accessible at:"
+echo "- Main Website: http://154.65.100.153/"
+echo "- Admin Panel: http://154.65.100.153/admin/"
+echo "If you encounter any issues, check the logs in /opt/baic/logs/"

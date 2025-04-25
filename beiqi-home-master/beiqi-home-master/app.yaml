@@ -1,0 +1,7 @@
+runtime: nodejs14
+service: frontend
+
+handlers:
+- url: /.*
+  script: auto
+  secure: always
