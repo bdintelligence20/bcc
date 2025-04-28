@@ -212,6 +212,11 @@ If you encounter any issues during deployment:
   - **beiqi-service-master/ruoyi-web**: Already configured to use port 8080 in application-prod.yml
   - **beiqi-web-master**: Serves static files through App Engine, so port configuration is not applicable
 
+- **Timeout Configuration for Backend Services**: The backend services (ruoyi-admin and ruoyi-web) have been configured with extended timeouts to prevent deployment failures:
+  - **Cloud Build Timeout**: Increased from 3600s (1 hour) to 7200s (2 hours) to allow more time for the build and deployment process
+  - **App Engine Deployment Timeout**: Set to 60 minutes (--timeout=60m) for both ruoyi-admin and ruoyi-web services
+  - **Resource Allocation**: Both services are allocated 2 CPUs, 6GB of memory, and 10GB of disk space to ensure they have enough resources to start up properly
+
 ## Additional Resources
 
 - [GCP Cloud Build Documentation](https://cloud.google.com/build/docs)
