@@ -132,7 +132,7 @@
             power: 180,
             torque: 305,
             wheelbase: 2760,
-            imgUrl: require('~/assets/image/home/model/colors/BJ40-PRO.webp'),
+            imgUrl: require('~/assets/image/home/model/colors/bj40-PRO.webp'),
             wheelLeft: require('~/assets/image/home/wheel/BJ40-PRO-01.webp'),
             wheelRight: require('~/assets/image/home/wheel/BJ40-PRO-02.webp'),
             width: '13.305%',

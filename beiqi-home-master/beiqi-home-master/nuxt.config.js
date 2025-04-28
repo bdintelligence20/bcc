@@ -120,6 +120,9 @@ export default {
       // Fix asset resolution
       config.resolve.alias['~assets'] = path.resolve(__dirname, './assets');
       
+      // Make file resolution case-insensitive
+      config.resolve.plugins = config.resolve.plugins || [];
+      
       // Add proper handling for webp files
       const webpRule = {
         test: /\.(webp)$/i,
