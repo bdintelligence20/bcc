@@ -70,6 +70,7 @@ steps:
         npm install
         npm install --save @nuxtjs/composition-api@0.33.1
         npm install --save file-loader
+        npm install --save @intlify/vue-i18n-loader@1.1.0
         npm run build
         
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'

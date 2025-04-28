@@ -140,6 +140,8 @@ If you encounter any issues during deployment:
 
 - **Asset Resolution**: The Nuxt configuration has been updated to properly resolve asset files, particularly webp images. This ensures that images referenced in components are correctly resolved during the build process.
 
+- **i18n Block Handling**: The Nuxt configuration has been updated to properly handle i18n blocks in Vue components. This is done by adding the `@intlify/vue-i18n-loader` dependency and configuring it in the build process. This ensures that internationalization blocks in Vue components are correctly processed during the build.
+
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
   - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
   - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js

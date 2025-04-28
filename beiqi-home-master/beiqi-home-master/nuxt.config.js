@@ -60,8 +60,30 @@ export default {
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
     '@nuxtjs/proxy',
-    '@nuxtjs/style-resources'
+    '@nuxtjs/style-resources',
+    '@nuxtjs/i18n'
   ],
+
+  // i18n configuration
+  i18n: {
+    locales: [
+      { code: 'en', iso: 'en-US', file: 'en.js' },
+      { code: 'es', iso: 'es-ES', file: 'es.js' },
+      { code: 'ar', iso: 'ar-SA', file: 'ar.js' }
+    ],
+    defaultLocale: 'en',
+    langDir: 'locales/',
+    vueI18n: {
+      fallbackLocale: 'en'
+    },
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root'
+    },
+    strategy: 'prefix_except_default',
+    parsePages: false
+  },
 
   // Global SCSS variables
   styleResources: {
@@ -107,6 +129,13 @@ export default {
         }
       };
       config.module.rules.push(webpRule);
+
+      // Add proper handling for i18n blocks in Vue components
+      config.module.rules.push({
+        resourceQuery: /blockType=i18n/,
+        type: 'javascript/auto',
+        loader: '@intlify/vue-i18n-loader'
+      });
     }
   },
 
