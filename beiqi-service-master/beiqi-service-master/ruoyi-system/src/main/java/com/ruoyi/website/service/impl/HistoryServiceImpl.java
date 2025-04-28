@@ -14,7 +14,6 @@ import com.ruoyi.website.domain.vo.HistoryLangVO;
 import com.ruoyi.website.mapper.HistoryLangMapper;
 import com.ruoyi.website.mapper.HistoryMapper;
 import com.ruoyi.website.service.IHistoryService;
-import jdk.nashorn.internal.ir.IfNode;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

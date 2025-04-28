@@ -157,7 +157,8 @@ If you encounter any issues during deployment:
   3. We tried Java 8 in App Engine Flexible environment, but it's no longer supported.
   4. We then tried Java 11 in App Engine Flexible environment, but it's also no longer supported.
   5. We encountered a Lombok compatibility issue with Java 17.
-  6. Finally, we had to fix code that was using internal Java APIs that are no longer accessible in Java 17.
+  6. We had to fix code that was using internal Java APIs that are no longer accessible in Java 17.
+  7. We also had to remove unused imports of internal Java APIs that were causing compilation errors.
   
   The solution was to:
   - Switch to App Engine Flexible environment to handle the large JAR files
@@ -168,6 +169,8 @@ If you encounter any issues during deployment:
   - Replace internal Java APIs with public alternatives:
     - Removed import of `jdk.nashorn.internal.objects.annotations.Getter` (Nashorn was removed in Java 15)
     - Replaced `sun.net.util.IPAddressUtil` with custom regex patterns for IP validation
+  - Remove unused imports of internal Java APIs:
+    - Removed import of `jdk.nashorn.internal.ir.IfNode` from HistoryServiceImpl.java
   - Configure appropriate resources in the app.yaml files (CPU, memory, disk)
 
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
