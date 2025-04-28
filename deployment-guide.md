@@ -153,6 +153,8 @@ If you encounter any issues during deployment:
 
 - **Java Runtime Version Mismatch**: The Java backend services were built with Java 8, but the app.yaml files were configured to use Java 17 runtime in App Engine. This mismatch was causing deployment failures. The app.yaml files for both ruoyi-admin and ruoyi-web have been updated to use Java 8 runtime to match the version used during the build process.
 
+- **JAR File Size Limit Exceeded**: The Java backend services were failing to deploy because the JAR files were too large (over 140MB) for App Engine Standard environment, which has a file size limit of 32MB. This was fixed by switching to App Engine Flexible environment, which has higher limits. The app.yaml files for both ruoyi-admin and ruoyi-web have been updated to use the Flexible environment with appropriate resource configurations.
+
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
   - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
   - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js
