@@ -137,7 +137,7 @@ After the build completes, you can access your applications at:
 
 - Frontend: `https://frontend-dot-YOUR_PROJECT_ID.appspot.com/`
 - Admin Panel: `https://admin-panel-dot-YOUR_PROJECT_ID.appspot.com/`
-- Backend Admin: `https://YOUR_PROJECT_ID.appspot.com/`
+- Backend Admin: `https://admin-backend-dot-YOUR_PROJECT_ID.appspot.com/`
 - Backend Web: `https://web-backend-dot-YOUR_PROJECT_ID.appspot.com/`
 - GeoIP Service: `https://beiqi-geoip-RANDOM_HASH-uc.a.run.app/`
 
@@ -214,7 +214,6 @@ If you encounter any issues during deployment:
 
 - **Timeout Configuration for Backend Services**: The backend services (ruoyi-admin and ruoyi-web) have been configured with extended timeouts to prevent deployment failures:
   - **Cloud Build Timeout**: Increased from 3600s (1 hour) to 7200s (2 hours) to allow more time for the build and deployment process
-  - **App Engine Deployment Timeout**: Set to 60 minutes (--timeout=60m) for both ruoyi-admin and ruoyi-web services
   - **Resource Allocation**: Both services are allocated 2 CPUs, 6GB of memory, and 10GB of disk space to ensure they have enough resources to start up properly
 
 ## Additional Resources
