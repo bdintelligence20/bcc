@@ -159,6 +159,7 @@ If you encounter any issues during deployment:
   5. We encountered a Lombok compatibility issue with Java 17.
   6. We had to fix code that was using internal Java APIs that are no longer accessible in Java 17.
   7. We also had to remove unused imports of internal Java APIs that were causing compilation errors.
+  8. Finally, we had to update the Spring Boot Maven Plugin version to be compatible with Java 17.
   
   The solution was to:
   - Switch to App Engine Flexible environment to handle the large JAR files
@@ -171,6 +172,7 @@ If you encounter any issues during deployment:
     - Replaced `sun.net.util.IPAddressUtil` with custom regex patterns for IP validation
   - Remove unused imports of internal Java APIs:
     - Removed import of `jdk.nashorn.internal.ir.IfNode` from HistoryServiceImpl.java
+  - Update the Spring Boot Maven Plugin version from 2.1.1.RELEASE to 2.5.13 to be compatible with Java 17
   - Configure appropriate resources in the app.yaml files (CPU, memory, disk)
 
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
