@@ -75,28 +75,61 @@ The cloudbuild.yaml file has been configured to:
 2. Copy all files from the `uploadPath` directory to the bucket
 3. Update the application configuration to use the bucket for file storage in production
 
-## Step 4: Set Up Cloud Build Trigger
+## Step 4: Set Up Cloud Build Triggers
 
 1. Go to the Cloud Build section in the GCP Console
 2. Connect your GitHub repository
-3. Create a new trigger with the following settings:
-   - Name: `baic-global-trigger`
+3. Create four separate triggers with the following settings:
+
+### GeoIP Service Trigger
+   - Name: `baic-geoip-trigger`
    - Event: `Push to a branch`
    - Source: `^master$`
+   - Included files filter: `beiqi-geoip/**`
    - Configuration: `Cloud Build configuration file (yaml or json)`
    - Location: `Repository`
-   - Cloud Build configuration file location: `cloudbuild.yaml`
+   - Cloud Build configuration file location: `cloudbuild-geoip.yaml`
 
-## Step 5: Trigger the First Build
+### Frontend Trigger
+   - Name: `baic-frontend-trigger`
+   - Event: `Push to a branch`
+   - Source: `^master$`
+   - Included files filter: `beiqi-home-master/**`
+   - Configuration: `Cloud Build configuration file (yaml or json)`
+   - Location: `Repository`
+   - Cloud Build configuration file location: `cloudbuild-frontend.yaml`
 
-1. In the Cloud Build console, find your trigger
+### Backend Trigger
+   - Name: `baic-backend-trigger`
+   - Event: `Push to a branch`
+   - Source: `^master$`
+   - Included files filter: `beiqi-service-master/**`
+   - Configuration: `Cloud Build configuration file (yaml or json)`
+   - Location: `Repository`
+   - Cloud Build configuration file location: `cloudbuild-backend.yaml`
+
+### Admin Panel Trigger
+   - Name: `baic-admin-trigger`
+   - Event: `Push to a branch`
+   - Source: `^master$`
+   - Included files filter: `beiqi-web-master/**`
+   - Configuration: `Cloud Build configuration file (yaml or json)`
+   - Location: `Repository`
+   - Cloud Build configuration file location: `cloudbuild-admin.yaml`
+
+## Step 5: Trigger the Builds
+
+Each trigger will automatically run when changes are pushed to the corresponding directories in your GitHub repository. You can also manually trigger them:
+
+1. In the Cloud Build console, find the trigger you want to run
 2. Click "Run trigger"
-3. This will:
-   - Build and deploy the GeoIP service to Cloud Run
-   - Deploy the Frontend to App Engine
-   - Deploy the Backend Admin to App Engine
-   - Deploy the Backend Web to App Engine
-   - Deploy the Admin Panel to App Engine
+3. Each trigger will build and deploy its respective component:
+   - GeoIP Service Trigger: Builds and deploys the GeoIP service to Cloud Run
+   - Frontend Trigger: Deploys the Frontend to App Engine
+   - Backend Trigger: Deploys both Backend Admin and Backend Web to App Engine
+   - Admin Panel Trigger: Deploys the Admin Panel to App Engine
+
+This parallel build approach significantly reduces the overall deployment time compared to the previous sequential approach.
 
 ## Step 6: Verify Deployment
 
