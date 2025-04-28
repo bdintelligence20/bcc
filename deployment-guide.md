@@ -154,12 +154,14 @@ If you encounter any issues during deployment:
 - **Java Runtime Version and Environment**: The Java backend services required several adjustments to deploy successfully:
   1. Initially, we encountered a mismatch between the Java 8 build and Java 17 runtime in App Engine Standard environment.
   2. Then we hit a file size limit (32MB) in App Engine Standard environment, as our JAR files were over 140MB.
-  3. Finally, we discovered that Java 8 is no longer supported in App Engine Flexible environment.
+  3. We tried Java 8 in App Engine Flexible environment, but it's no longer supported.
+  4. We then tried Java 11 in App Engine Flexible environment, but it's also no longer supported.
   
   The solution was to:
   - Switch to App Engine Flexible environment to handle the large JAR files
-  - Use Java 11 runtime in the app.yaml files (supported in Flexible environment)
-  - Update the Maven build to use Java 11 as well (using maven:3.8-openjdk-11 Docker image)
+  - Use Java 17 runtime in the app.yaml files (the latest supported version)
+  - Update the Maven build to use Java 17 as well (using maven:3.8-openjdk-17 Docker image)
+  - Update the Maven compiler plugin configuration in the parent POM file to use Java 17
   - Configure appropriate resources in the app.yaml files (CPU, memory, disk)
 
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
