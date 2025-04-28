@@ -1,6 +1,5 @@
 package com.ruoyi.common.utils;
 
-import jdk.nashorn.internal.objects.annotations.Getter;
 import lombok.Data;
 import lombok.Setter;
 import org.springframework.context.ApplicationEvent;

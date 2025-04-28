@@ -2,7 +2,7 @@ package com.ruoyi.common.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import sun.net.util.IPAddressUtil;
+import java.util.regex.Pattern;
 
 /**
  * ip 合法性校验等
@@ -10,13 +10,39 @@ import sun.net.util.IPAddressUtil;
  * @author liuzhuoming
  */
 public class IpAddrUtil {
+    // Regular expression patterns for IPv4 and IPv6 validation
+    private static final Pattern IPV4_PATTERN = Pattern.compile(
+            "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
+            "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+    
+    private static final Pattern IPV6_PATTERN = Pattern.compile(
+            "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|" +
+            "([0-9a-fA-F]{1,4}:){1,7}:|" +
+            "([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|" +
+            "([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|" +
+            "([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|" +
+            "([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|" +
+            "([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|" +
+            "[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|" +
+            ":((:[0-9a-fA-F]{1,4}){1,7}|:)|" +
+            "fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]+|" +
+            "::(ffff(:0{1,4})?:)?((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9])|" +
+            "([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1?[0-9])?[0-9])\\.){3}(25[0-5]|(2[0-4]|1?[0-9])?[0-9]))$");
 
     public static boolean isIpv4(String ipAddr) {
-        return IPAddressUtil.isIPv4LiteralAddress(ipAddr);
+        if (ipAddr == null || ipAddr.isEmpty()) {
+            return false;
+        }
+        return IPV4_PATTERN.matcher(ipAddr).matches();
     }
 
     public static boolean isIpv6(String ipAddr) {
-        return IPAddressUtil.isIPv6LiteralAddress(ipAddr);
+        if (ipAddr == null || ipAddr.isEmpty()) {
+            return false;
+        }
+        return IPV6_PATTERN.matcher(ipAddr).matches();
     }
 
     public static boolean isIp(String ipAddr) {

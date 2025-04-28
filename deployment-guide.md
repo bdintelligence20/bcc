@@ -156,7 +156,8 @@ If you encounter any issues during deployment:
   2. Then we hit a file size limit (32MB) in App Engine Standard environment, as our JAR files were over 140MB.
   3. We tried Java 8 in App Engine Flexible environment, but it's no longer supported.
   4. We then tried Java 11 in App Engine Flexible environment, but it's also no longer supported.
-  5. Finally, we encountered a Lombok compatibility issue with Java 17.
+  5. We encountered a Lombok compatibility issue with Java 17.
+  6. Finally, we had to fix code that was using internal Java APIs that are no longer accessible in Java 17.
   
   The solution was to:
   - Switch to App Engine Flexible environment to handle the large JAR files
@@ -164,6 +165,9 @@ If you encounter any issues during deployment:
   - Update the Maven build to use Java 17 as well (using maven:3.8-openjdk-17 Docker image)
   - Update the Maven compiler plugin configuration in the parent POM file to use Java 17
   - Update the Lombok version from 1.18.10 to 1.18.24 for Java 17 compatibility
+  - Replace internal Java APIs with public alternatives:
+    - Removed import of `jdk.nashorn.internal.objects.annotations.Getter` (Nashorn was removed in Java 15)
+    - Replaced `sun.net.util.IPAddressUtil` with custom regex patterns for IP validation
   - Configure appropriate resources in the app.yaml files (CPU, memory, disk)
 
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
