@@ -66,7 +66,10 @@ steps:
           echo "@import 'element-variables';" >> assets/scss/index.scss
           echo "@import 'fonts';" >> assets/scss/index.scss
         fi
+        # Install dependencies including the newly added ones
         npm install
+        npm install --save @nuxtjs/composition-api@0.33.1
+        npm install --save file-loader
         npm run build
         
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'

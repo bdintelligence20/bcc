@@ -1,3 +1,5 @@
+import path from 'path'
+
 export default {
   server: {
     host: '0.0.0.0',
@@ -49,15 +51,25 @@ export default {
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/eslint
-    '@nuxtjs/eslint-module'
+    '@nuxtjs/eslint-module',
+    '@nuxtjs/composition-api/module'
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
-    '@nuxtjs/proxy'
+    '@nuxtjs/proxy',
+    '@nuxtjs/style-resources'
   ],
+
+  // Global SCSS variables
+  styleResources: {
+    scss: [
+      '~/assets/scss/variables.scss',
+      '~/assets/scss/mixins.scss'
+    ]
+  },
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
@@ -82,6 +94,20 @@ export default {
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
     transpile: [/^element-ui/],
+    extend(config, { isClient }) {
+      // Fix asset resolution
+      config.resolve.alias['~assets'] = path.resolve(__dirname, './assets');
+      
+      // Add proper handling for webp files
+      const webpRule = {
+        test: /\.(webp)$/i,
+        loader: 'file-loader',
+        options: {
+          name: '[path][name].[ext]'
+        }
+      };
+      config.module.rules.push(webpRule);
+    }
   },
 
   router: {

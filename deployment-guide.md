@@ -134,6 +134,12 @@ If you encounter any issues during deployment:
 
 - **Missing SCSS Files**: The beiqi-home-master service requires an index.scss file in the assets/scss directory. This file has been created and added to the repository. The cloudbuild.yaml file has also been updated to create this file during the build process if it doesn't exist. If you see errors about missing SCSS files, make sure you're using the latest version of the cloudbuild.yaml file.
 
+- **SCSS Variable Resolution**: The Nuxt configuration has been updated to properly load SCSS variables globally using the `@nuxtjs/style-resources` module. This ensures that variables defined in variables.scss are available to all components without needing to import them explicitly.
+
+- **Missing Dependencies**: The package.json file has been updated to include `@nuxtjs/composition-api`, which is required by the nav.js plugin. The cloudbuild.yaml file has also been updated to install this dependency during the build process.
+
+- **Asset Resolution**: The Nuxt configuration has been updated to properly resolve asset files, particularly webp images. This ensures that images referenced in components are correctly resolved during the build process.
+
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
   - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
   - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js

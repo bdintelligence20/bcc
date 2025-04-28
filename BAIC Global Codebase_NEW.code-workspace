@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "BAIC Global Codebase_NEW",
+			"path": "."
+		},
+		{
+			"name": "uploadPath",
+			"path": "../../../../../beiqi/uploadPath"
+		}
+	],
+	"settings": {}
+}
