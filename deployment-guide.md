@@ -151,6 +151,8 @@ If you encounter any issues during deployment:
 
 - **Maven Not Found in Build Environment**: The build was failing with "bash: line 21: mvn: command not found" because Maven was not installed in the default Cloud Build environment. This was fixed by using a dedicated Maven Docker image (`maven:3.8-openjdk-8`) for the Java build steps. This image has Maven pre-installed and configured with the correct Java version (Java 8) required by the project. The build process has been split into three steps: 1) Update configuration files using the Cloud SDK image, 2) Build the Java project using the Maven image, and 3) Deploy the built application using the Cloud SDK image.
 
+- **Java Runtime Version Mismatch**: The Java backend services were built with Java 8, but the app.yaml files were configured to use Java 17 runtime in App Engine. This mismatch was causing deployment failures. The app.yaml files for both ruoyi-admin and ruoyi-web have been updated to use Java 8 runtime to match the version used during the build process.
+
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
   - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
   - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js
