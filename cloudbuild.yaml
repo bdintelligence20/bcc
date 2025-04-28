@@ -108,7 +108,7 @@ steps:
         fi
   
   # Build the Java project with Maven
-  - name: 'maven:3.8-openjdk-8'
+  - name: 'maven:3.8-openjdk-11'
     entrypoint: bash
     args:
       - '-c'
