@@ -6,6 +6,7 @@
         <artifactId>ruoyi-beiqi</artifactId>
         <groupId>com.ruoyi</groupId>
         <version>3.4.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
