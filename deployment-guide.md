@@ -142,6 +142,8 @@ If you encounter any issues during deployment:
 
 - **i18n Block Handling**: The Nuxt configuration has been updated to properly handle i18n blocks in Vue components. This is done by adding the `@intlify/vue-i18n-loader` dependency and configuring it in the build process. This ensures that internationalization blocks in Vue components are correctly processed during the build.
 
+- **Case Sensitivity in File Paths**: Some image file references in Vue components had case sensitivity issues. For example, referencing 'new-x7-01.webp' when the actual file name is 'new-X7-01.webp' (with capital X). These references have been updated to match the actual file names. This is particularly important when deploying to Linux-based environments like GCP, which are case-sensitive for file paths.
+
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
   - **beiqi-geoip**: Updated to use PORT environment variable (8080 in Cloud Run)
   - **beiqi-home-master**: Already configured to use port 8080 in nuxt.config.js
