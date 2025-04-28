@@ -156,23 +156,24 @@ If you encounter any issues during deployment:
   2. Then we hit a file size limit (32MB) in App Engine Standard environment, as our JAR files were over 140MB.
   3. We tried Java 8 in App Engine Flexible environment, but it's no longer supported.
   4. We then tried Java 11 in App Engine Flexible environment, but it's also no longer supported.
-  5. We encountered a Lombok compatibility issue with Java 17.
-  6. We had to fix code that was using internal Java APIs that are no longer accessible in Java 17.
-  7. We also had to remove unused imports of internal Java APIs that were causing compilation errors.
-  8. Finally, we had to update the Spring Boot Maven Plugin version to be compatible with Java 17.
+  5. We tried Java 17 in App Engine Flexible environment, but it's also no longer supported.
+  6. We encountered a Lombok compatibility issue with Java 17/21.
+  7. We had to fix code that was using internal Java APIs that are no longer accessible in Java 17/21.
+  8. We also had to remove unused imports of internal Java APIs that were causing compilation errors.
+  9. We had to update the Spring Boot Maven Plugin version to be compatible with Java 17/21.
   
   The solution was to:
   - Switch to App Engine Flexible environment to handle the large JAR files
-  - Use Java 17 runtime in the app.yaml files (the latest supported version)
-  - Update the Maven build to use Java 17 as well (using maven:3.8-openjdk-17 Docker image)
-  - Update the Maven compiler plugin configuration in the parent POM file to use Java 17
-  - Update the Lombok version from 1.18.10 to 1.18.24 for Java 17 compatibility
+  - Use Java 21 runtime in the app.yaml files (the latest supported version)
+  - Update the Maven build to use Java 21 as well (using maven:3.8-openjdk-21 Docker image)
+  - Update the Maven compiler plugin configuration in the parent POM file to use Java 21
+  - Update the Lombok version from 1.18.10 to 1.18.24 for Java 17/21 compatibility
   - Replace internal Java APIs with public alternatives:
     - Removed import of `jdk.nashorn.internal.objects.annotations.Getter` (Nashorn was removed in Java 15)
     - Replaced `sun.net.util.IPAddressUtil` with custom regex patterns for IP validation
   - Remove unused imports of internal Java APIs:
     - Removed import of `jdk.nashorn.internal.ir.IfNode` from HistoryServiceImpl.java
-  - Update the Spring Boot Maven Plugin version from 2.1.1.RELEASE to 2.5.13 to be compatible with Java 17
+  - Update the Spring Boot Maven Plugin version from 2.1.1.RELEASE to 2.5.13 to be compatible with Java 17/21
   - Configure appropriate resources in the app.yaml files (CPU, memory, disk)
 
 - **Port Configuration for Other Services**: All services have been configured to use the correct ports:
