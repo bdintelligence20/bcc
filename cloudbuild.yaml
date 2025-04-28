@@ -182,4 +182,4 @@ steps:
 images:
   - 'gcr.io/$PROJECT_ID/beiqi-geoip'
 
-timeout: 3600s
+timeout: 7200s
