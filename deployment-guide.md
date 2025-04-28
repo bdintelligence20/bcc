@@ -165,7 +165,7 @@ If you encounter any issues during deployment:
   The solution was to:
   - Switch to App Engine Flexible environment to handle the large JAR files
   - Use Java 21 runtime in the app.yaml files (the latest supported version)
-  - Update the Maven build to use Java 21 as well (using maven:3.8-openjdk-21 Docker image)
+  - Update the Maven build to use Java 21 as well (using maven:3.8-eclipse-temurin-21 Docker image)
   - Update the Maven compiler plugin configuration in the parent POM file to use Java 21
   - Update the Lombok version from 1.18.10 to 1.18.24 for Java 17/21 compatibility
   - Replace internal Java APIs with public alternatives:
