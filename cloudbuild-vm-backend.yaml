@@ -97,12 +97,27 @@ steps:
           ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
         fi
         
-        # Add SSH key to project metadata
-        EXISTING_KEYS=$(gcloud compute project-info describe --format="value(commonInstanceMetadata.items.filter(key:ssh-keys).firstof(value))")
-        NEW_KEY=$(cat ~/.ssh/google_compute_engine.pub)
-        echo "${EXISTING_KEYS}" > /tmp/ssh-keys
-        echo "${NEW_KEY}" >> /tmp/ssh-keys
-        gcloud compute project-info add-metadata --metadata-from-file=ssh-keys=/tmp/ssh-keys
+        # Add SSH key to project metadata - using a different approach to avoid substitution issues
+        gcloud compute os-login ssh-keys add --key-file=~/.ssh/google_compute_engine.pub
+        
+        # Define VM variables
+        export VM_NAME="baic-backend-vm"
+        export VM_ZONE="us-central1-a"
+        
+        # Create VM if it doesn't exist
+        if ! gcloud compute instances describe $VM_NAME --zone=$VM_ZONE &>/dev/null; then
+          echo "Creating VM $VM_NAME..."
+          gcloud compute instances create $VM_NAME \
+            --zone=$VM_ZONE \
+            --machine-type=e2-standard-2 \
+            --boot-disk-size=20GB \
+            --image-family=debian-11 \
+            --image-project=debian-cloud \
+            --tags=http-server,https-server
+        fi
+        
+        # Also add the key to the VM's metadata directly
+        gcloud compute instances add-metadata $VM_NAME --zone=$VM_ZONE --metadata-from-file=ssh-keys=~/.ssh/google_compute_engine.pub
         
   # Deploy to VM with increased timeout
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
