@@ -12,7 +12,23 @@ REMOTE_DIR="/opt/baic"
 ADMIN_SERVICE="baic-admin"
 WEB_SERVICE="baic-web"
 
+# Use absolute paths for SSH keys
+SSH_DIR="/root/.ssh"
+SSH_KEY="${SSH_DIR}/google_compute_engine"
+SSH_KEY_PUB="${SSH_KEY}.pub"
+
 echo "Starting simplified deployment to VM $VM_NAME in zone $VM_ZONE..."
+
+# Verify SSH key exists
+if [ ! -f "$SSH_KEY" ]; then
+  echo "SSH key not found at $SSH_KEY. Generating new key..."
+  mkdir -p "$SSH_DIR"
+  ssh-keygen -t rsa -f "$SSH_KEY" -N "" -q
+fi
+
+# Display SSH key for debugging
+echo "Using SSH key:"
+cat "$SSH_KEY_PUB"
 
 # Setup VM if needed
 echo "Setting up VM..."
