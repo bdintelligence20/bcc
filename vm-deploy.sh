@@ -120,12 +120,16 @@ deploy_jars() {
   echo "Ensuring remote directory exists..."
   gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo mkdir -p ${REMOTE_DIR} ${REMOTE_DIR}/logs && sudo chmod 777 ${REMOTE_DIR}"
   
-  # Check if systemd service files exist and create them if they don't
-  echo "Checking if systemd service files exist..."
-  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="
-    if [ ! -f /etc/systemd/system/${ADMIN_SERVICE}.service ]; then
-      echo "Creating ${ADMIN_SERVICE} service file..."
-      sudo bash -c "cat > /etc/systemd/system/${ADMIN_SERVICE}.service << EOF
+  # Create a setup script for the systemd services
+  echo "Creating setup script for systemd services..."
+  cat > setup-services.sh << 'EOFLOCAL'
+#!/bin/bash
+ADMIN_SERVICE="baic-admin"
+WEB_SERVICE="baic-web"
+
+if [ ! -f /etc/systemd/system/$ADMIN_SERVICE.service ]; then
+  echo "Creating $ADMIN_SERVICE service file..."
+  sudo bash -c "cat > /etc/systemd/system/$ADMIN_SERVICE.service << EOF
 [Unit]
 Description=BAIC Admin Backend Service
 After=network.target
@@ -142,12 +146,12 @@ StandardError=file:/opt/baic/logs/admin-error.log
 
 [Install]
 WantedBy=multi-user.target
-EOF'
-    fi
+EOF"
+fi
 
-    if [ ! -f /etc/systemd/system/${WEB_SERVICE}.service ]; then
-      echo "Creating ${WEB_SERVICE} service file..."
-      sudo bash -c "cat > /etc/systemd/system/${WEB_SERVICE}.service << EOF
+if [ ! -f /etc/systemd/system/$WEB_SERVICE.service ]; then
+  echo "Creating $WEB_SERVICE service file..."
+  sudo bash -c "cat > /etc/systemd/system/$WEB_SERVICE.service << EOF
 [Unit]
 Description=BAIC Web Backend Service
 After=network.target
@@ -164,14 +168,28 @@ StandardError=file:/opt/baic/logs/web-error.log
 
 [Install]
 WantedBy=multi-user.target
-EOF'
-    fi
+EOF"
+fi
 
-    # Reload systemd and enable services
-    sudo systemctl daemon-reload
-    sudo systemctl enable ${ADMIN_SERVICE}
-    sudo systemctl enable ${WEB_SERVICE}
-  "
+# Reload systemd and enable services
+sudo systemctl daemon-reload
+sudo systemctl enable $ADMIN_SERVICE
+sudo systemctl enable $WEB_SERVICE
+EOFLOCAL
+
+  # Make the script executable
+  chmod +x setup-services.sh
+  
+  # Copy the script to the VM
+  echo "Copying setup script to VM..."
+  gcloud compute scp setup-services.sh ${SSH_USER}@${VM_NAME}:~/setup-services.sh --zone=${VM_ZONE}
+  
+  # Execute the script on the VM
+  echo "Executing setup script on VM..."
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="chmod +x ~/setup-services.sh && ~/setup-services.sh"
+  
+  # Clean up the script
+  rm setup-services.sh
   
   # Copy JAR files to VM - first to home directory, then move to final location
   echo "Copying ${ADMIN_JAR_PATH} to VM..."
