@@ -81,7 +81,7 @@ steps:
         # Build both modules
         mvn clean package -DskipTests
 
-  # Make the deployment script executable
+  # Make the deployment script executable and set up SSH
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: bash
     args:
@@ -89,12 +89,33 @@ steps:
       - |
         chmod +x vm-deploy.sh
         
-  # Deploy to VM
+        # Ensure SSH directory exists
+        mkdir -p ~/.ssh
+        
+        # Generate SSH key if it doesn't exist
+        if [ ! -f ~/.ssh/google_compute_engine ]; then
+          ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
+        fi
+        
+        # Add SSH key to project metadata
+        EXISTING_KEYS=$(gcloud compute project-info describe --format="value(commonInstanceMetadata.items.filter(key:ssh-keys).firstof(value))")
+        NEW_KEY=$(cat ~/.ssh/google_compute_engine.pub)
+        echo "${EXISTING_KEYS}" > /tmp/ssh-keys
+        echo "${NEW_KEY}" >> /tmp/ssh-keys
+        gcloud compute project-info add-metadata --metadata-from-file=ssh-keys=/tmp/ssh-keys
+        
+  # Deploy to VM with increased timeout
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: bash
     args:
       - '-c'
       - |
+        # Wait for SSH key propagation
+        echo "Waiting for SSH key propagation..."
+        sleep 30
+        
+        # Run deployment script
         ./vm-deploy.sh
+    timeout: 1800s  # 30 minutes
 
 timeout: 7200s  # 2 hours

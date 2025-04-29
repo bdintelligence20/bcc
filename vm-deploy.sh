@@ -110,12 +110,31 @@ EOF'"
 deploy_jars() {
   echo "Deploying JAR files to VM..."
   
+  # Ensure SSH keys are properly set up
+  echo "Setting up SSH keys..."
+  # Generate SSH key if it doesn't exist
+  if [ ! -f ~/.ssh/google_compute_engine ]; then
+    ssh-keygen -t rsa -f ~/.ssh/google_compute_engine -N "" -q
+  fi
+  
+  # Get the default username for the VM
+  DEFAULT_USER=$(gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --dry-run | grep @ | cut -d@ -f1)
+  echo "Default SSH user is: ${DEFAULT_USER}"
+  
+  # Create remote directory with proper permissions
+  echo "Creating remote directory with proper permissions..."
+  gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo mkdir -p ${REMOTE_DIR} && sudo chmod 777 ${REMOTE_DIR}"
+  
   # Copy JAR files to VM
   echo "Copying ${ADMIN_JAR_PATH} to VM..."
-  gcloud compute scp ${ADMIN_JAR_PATH} ${VM_NAME}:${REMOTE_DIR}/ruoyi-admin.jar --zone=${VM_ZONE}
+  gcloud compute scp ${ADMIN_JAR_PATH} ${DEFAULT_USER}@${VM_NAME}:~/ruoyi-admin.jar --zone=${VM_ZONE}
   
   echo "Copying ${WEB_JAR_PATH} to VM..."
-  gcloud compute scp ${WEB_JAR_PATH} ${VM_NAME}:${REMOTE_DIR}/ruoyi-web.jar --zone=${VM_ZONE}
+  gcloud compute scp ${WEB_JAR_PATH} ${DEFAULT_USER}@${VM_NAME}:~/ruoyi-web.jar --zone=${VM_ZONE}
+  
+  # Move JAR files to the proper location
+  echo "Moving JAR files to the proper location..."
+  gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo mv ~/ruoyi-admin.jar ${REMOTE_DIR}/ruoyi-admin.jar && sudo mv ~/ruoyi-web.jar ${REMOTE_DIR}/ruoyi-web.jar && sudo chown -R root:root ${REMOTE_DIR}"
   
   # Restart services
   echo "Restarting services..."
