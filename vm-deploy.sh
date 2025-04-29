@@ -118,7 +118,60 @@ deploy_jars() {
   
   # Ensure remote directory exists and has proper permissions
   echo "Ensuring remote directory exists..."
-  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo mkdir -p ${REMOTE_DIR} && sudo chmod 777 ${REMOTE_DIR}"
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo mkdir -p ${REMOTE_DIR} ${REMOTE_DIR}/logs && sudo chmod 777 ${REMOTE_DIR}"
+  
+  # Check if systemd service files exist and create them if they don't
+  echo "Checking if systemd service files exist..."
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="
+    if [ ! -f /etc/systemd/system/${ADMIN_SERVICE}.service ]; then
+      echo "Creating ${ADMIN_SERVICE} service file..."
+      sudo bash -c "cat > /etc/systemd/system/${ADMIN_SERVICE}.service << EOF
+[Unit]
+Description=BAIC Admin Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/baic
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod
+Restart=always
+RestartSec=10
+StandardOutput=file:/opt/baic/logs/admin.log
+StandardError=file:/opt/baic/logs/admin-error.log
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+    fi
+
+    if [ ! -f /etc/systemd/system/${WEB_SERVICE}.service ]; then
+      echo "Creating ${WEB_SERVICE} service file..."
+      sudo bash -c "cat > /etc/systemd/system/${WEB_SERVICE}.service << EOF
+[Unit]
+Description=BAIC Web Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/baic
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod
+Restart=always
+RestartSec=10
+StandardOutput=file:/opt/baic/logs/web.log
+StandardError=file:/opt/baic/logs/web-error.log
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+    fi
+
+    # Reload systemd and enable services
+    sudo systemctl daemon-reload
+    sudo systemctl enable ${ADMIN_SERVICE}
+    sudo systemctl enable ${WEB_SERVICE}
+  "
   
   # Copy JAR files to VM - first to home directory, then move to final location
   echo "Copying ${ADMIN_JAR_PATH} to VM..."
