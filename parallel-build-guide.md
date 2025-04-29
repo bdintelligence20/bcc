@@ -4,13 +4,12 @@ This guide explains how to use the new parallel build system for the BAIC Global
 
 ## Overview
 
-The BAIC Global application has been split into five separate build configurations to enable parallel deployment:
+The BAIC Global application has been split into four separate build configurations to enable parallel deployment:
 
 1. **GeoIP Service** (Cloud Run)
 2. **Frontend** (App Engine)
-3. **Admin Backend Service** (App Engine Flexible - ruoyi-admin)
-4. **Web Backend Service** (App Engine Flexible - ruoyi-web)
-5. **Admin Panel** (App Engine)
+3. **Backend Services** (Compute Engine VM - ruoyi-admin and ruoyi-web)
+4. **Admin Panel** (App Engine)
 
 Each component has its own Cloud Build configuration file and trigger, allowing them to be built and deployed independently and concurrently.
 
@@ -27,8 +26,7 @@ The following Cloud Build configuration files have been created:
 
 - `cloudbuild-geoip.yaml`: Builds and deploys the GeoIP service to Cloud Run
 - `cloudbuild-frontend.yaml`: Builds and deploys the Frontend to App Engine
-- `cloudbuild-admin-backend.yaml`: Builds and deploys the Backend Admin to App Engine Flexible
-- `cloudbuild-web-backend.yaml`: Builds and deploys the Backend Web to App Engine Flexible
+- `cloudbuild-vm-backend.yaml`: Builds and deploys both Backend services (Admin and Web) to a Compute Engine VM
 - `cloudbuild-admin.yaml`: Builds and deploys the Admin Panel to App Engine
 
 ## Setting Up Cloud Build Triggers
@@ -57,23 +55,14 @@ To set up the Cloud Build triggers:
    - Location: `Repository`
    - Cloud Build configuration file location: `cloudbuild-frontend.yaml`
 
-### Admin Backend Trigger
-   - Name: `baic-admin-backend-trigger`
+### Backend Services Trigger (VM Deployment)
+   - Name: `baic-backend-vm-trigger`
    - Event: `Push to a branch`
    - Source: `^master$`
-   - Included files filter: `beiqi-service-master/beiqi-service-master/ruoyi-admin/**`
+   - Included files filter: `beiqi-service-master/beiqi-service-master/**`
    - Configuration: `Cloud Build configuration file (yaml or json)`
    - Location: `Repository`
-   - Cloud Build configuration file location: `cloudbuild-admin-backend.yaml`
-
-### Web Backend Trigger
-   - Name: `baic-web-backend-trigger`
-   - Event: `Push to a branch`
-   - Source: `^master$`
-   - Included files filter: `beiqi-service-master/beiqi-service-master/ruoyi-web/**`
-   - Configuration: `Cloud Build configuration file (yaml or json)`
-   - Location: `Repository`
-   - Cloud Build configuration file location: `cloudbuild-web-backend.yaml`
+   - Cloud Build configuration file location: `cloudbuild-vm-backend.yaml`
 
 ### Admin Panel Trigger
    - Name: `baic-admin-trigger`
@@ -92,8 +81,7 @@ Once the triggers are set up, they will automatically run when changes are pushe
 
 - Changes to `beiqi-geoip/**` will trigger the GeoIP service build
 - Changes to `beiqi-home-master/**` will trigger the Frontend build
-- Changes to `beiqi-service-master/beiqi-service-master/ruoyi-admin/**` will trigger the Admin Backend build
-- Changes to `beiqi-service-master/beiqi-service-master/ruoyi-web/**` will trigger the Web Backend build
+- Changes to `beiqi-service-master/beiqi-service-master/**` will trigger the Backend Services VM deployment
 - Changes to `beiqi-web-master/**` will trigger the Admin Panel build
 
 ### Manual Builds
@@ -106,13 +94,12 @@ You can also manually trigger builds:
 
 ### Initial Deployment
 
-For the initial deployment, you should run all five triggers to deploy all components:
+For the initial deployment, you should run all four triggers to deploy all components:
 
 1. Run the GeoIP service trigger
 2. Run the Frontend trigger
-3. Run the Admin Backend trigger
-4. Run the Web Backend trigger
-5. Run the Admin Panel trigger
+3. Run the Backend Services VM trigger
+4. Run the Admin Panel trigger
 
 These can be run concurrently, as they are independent of each other.
 

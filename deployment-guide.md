@@ -99,23 +99,14 @@ The cloudbuild.yaml file has been configured to:
    - Location: `Repository`
    - Cloud Build configuration file location: `cloudbuild-frontend.yaml`
 
-### Admin Backend Trigger
-   - Name: `baic-admin-backend-trigger`
+### Backend Services Trigger (VM Deployment)
+   - Name: `baic-backend-vm-trigger`
    - Event: `Push to a branch`
    - Source: `^master$`
-   - Included files filter: `beiqi-service-master/beiqi-service-master/ruoyi-admin/**`
+   - Included files filter: `beiqi-service-master/beiqi-service-master/**`
    - Configuration: `Cloud Build configuration file (yaml or json)`
    - Location: `Repository`
-   - Cloud Build configuration file location: `cloudbuild-admin-backend.yaml`
-
-### Web Backend Trigger
-   - Name: `baic-web-backend-trigger`
-   - Event: `Push to a branch`
-   - Source: `^master$`
-   - Included files filter: `beiqi-service-master/beiqi-service-master/ruoyi-web/**`
-   - Configuration: `Cloud Build configuration file (yaml or json)`
-   - Location: `Repository`
-   - Cloud Build configuration file location: `cloudbuild-web-backend.yaml`
+   - Cloud Build configuration file location: `cloudbuild-vm-backend.yaml`
 
 ### Admin Panel Trigger
    - Name: `baic-admin-trigger`

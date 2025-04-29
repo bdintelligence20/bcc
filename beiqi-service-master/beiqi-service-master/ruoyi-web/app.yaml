@@ -14,15 +14,7 @@ resources:
   memory_gb: 6
   disk_size_gb: 10
 
-# Enhanced health check configuration
-health_check:
-  enable_health_check: True
-  check_interval_sec: 30
-  timeout_sec: 10
-  unhealthy_threshold: 2
-  healthy_threshold: 2
-
-# Extended startup timeout
+# Extended startup timeout - using only readiness check (not both)
 readiness_check:
   path: "/"
   check_interval_sec: 30
