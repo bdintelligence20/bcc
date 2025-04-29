@@ -138,7 +138,9 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/baic
-ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/admin.log
@@ -160,7 +162,9 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/baic
-ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/web.log
@@ -198,13 +202,71 @@ EOFLOCAL
   echo "Copying ${WEB_JAR_PATH} to VM..."
   gcloud compute scp ${WEB_JAR_PATH} ${SSH_USER}@${VM_NAME}:~/ruoyi-web.jar --zone=${VM_ZONE}
   
-  # Move JAR files to the proper location
-  echo "Moving JAR files to the proper location..."
-  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo mv ~/ruoyi-admin.jar ${REMOTE_DIR}/ruoyi-admin.jar && sudo mv ~/ruoyi-web.jar ${REMOTE_DIR}/ruoyi-web.jar && sudo chown -R root:root ${REMOTE_DIR}"
+  # Create a setup script for Java and JAR files
+  echo "Creating setup script for Java and JAR files..."
+  cat > setup-java.sh << 'EOFLOCAL'
+#!/bin/bash
+set -e
+
+# Install Java 8 explicitly
+echo "Installing Java 8..."
+sudo apt-get update
+sudo apt-get install -y openjdk-8-jdk || sudo apt-get install -y openjdk-11-jdk
+
+# Find Java installation path
+JAVA_PATH=$(sudo update-alternatives --display java | grep -o '^/.*java$' | head -n1 | sed 's/bin\/java$//')
+if [ -z "$JAVA_PATH" ]; then
+  JAVA_PATH="/usr/lib/jvm/java-8-openjdk-amd64/"
+fi
+echo "Java installation path: $JAVA_PATH"
+
+# Set JAVA_HOME
+export JAVA_HOME=$JAVA_PATH
+echo "Setting JAVA_HOME=$JAVA_HOME"
+sudo bash -c "echo 'JAVA_HOME=$JAVA_HOME' >> /etc/environment"
+
+# Verify Java installation
+echo "Verifying Java installation..."
+java -version
+which java
+echo "Java home: $JAVA_HOME"
+
+# Make sure Java is in the PATH
+export PATH=$JAVA_HOME/bin:$PATH
+
+# Move JAR files to the proper location with correct permissions
+echo "Moving JAR files to the proper location..."
+sudo mv ~/ruoyi-admin.jar /opt/baic/ruoyi-admin.jar
+sudo mv ~/ruoyi-web.jar /opt/baic/ruoyi-web.jar
+sudo chmod 755 /opt/baic/ruoyi-admin.jar
+sudo chmod 755 /opt/baic/ruoyi-web.jar
+sudo chown -R root:root /opt/baic
+
+# Verify JAR files
+echo "Verifying JAR files..."
+ls -la /opt/baic/
+file /opt/baic/ruoyi-admin.jar
+file /opt/baic/ruoyi-web.jar
+
+# Restart services
+echo "Restarting services..."
+sudo systemctl restart baic-admin
+sudo systemctl restart baic-web
+EOFLOCAL
+
+  # Make the script executable
+  chmod +x setup-java.sh
   
-  # Restart services
-  echo "Restarting services..."
-  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo systemctl restart ${ADMIN_SERVICE} && sudo systemctl restart ${WEB_SERVICE}"
+  # Copy the script to the VM
+  echo "Copying Java setup script to VM..."
+  gcloud compute scp setup-java.sh ${SSH_USER}@${VM_NAME}:~/setup-java.sh --zone=${VM_ZONE}
+  
+  # Execute the script on the VM
+  echo "Executing Java setup script on VM..."
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="chmod +x ~/setup-java.sh && ~/setup-java.sh"
+  
+  # Clean up the script
+  rm setup-java.sh
   
   # Check service status
   echo "Checking service status..."
