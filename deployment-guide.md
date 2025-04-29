@@ -146,8 +146,8 @@ After the build completes, you can access your applications at:
 
 - Frontend: `https://frontend-dot-YOUR_PROJECT_ID.appspot.com/`
 - Admin Panel: `https://admin-panel-dot-YOUR_PROJECT_ID.appspot.com/`
-- Backend Admin: `https://beiqi-admin-backend-RANDOM_HASH-uc.a.run.app/`
-- Backend Web: `https://beiqi-web-backend-RANDOM_HASH-uc.a.run.app/`
+- Backend Admin: `https://admin-backend-dot-YOUR_PROJECT_ID.appspot.com/`
+- Backend Web: `https://web-backend-dot-YOUR_PROJECT_ID.appspot.com/`
 - GeoIP Service: `https://beiqi-geoip-RANDOM_HASH-uc.a.run.app/`
 
 Replace `YOUR_PROJECT_ID` with your actual GCP project ID.

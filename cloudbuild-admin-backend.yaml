@@ -63,16 +63,13 @@ steps:
         # Build only the admin module and its dependencies
         mvn clean package -DskipTests -pl ruoyi-admin -am
   
-  # Build and deploy the admin backend to Cloud Run
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/beiqi-admin-backend', './beiqi-service-master/beiqi-service-master/ruoyi-admin']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/beiqi-admin-backend']
+  # Deploy the built application to App Engine Flexible
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args: ['run', 'deploy', 'beiqi-admin-backend', '--image', 'gcr.io/$PROJECT_ID/beiqi-admin-backend', '--region', 'us-central1', '--platform', 'managed', '--allow-unauthenticated', '--memory', '4Gi', '--cpu', '2', '--timeout=10m', '--min-instances=1']
-
-images:
-  - 'gcr.io/$PROJECT_ID/beiqi-admin-backend'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        cd beiqi-service-master/beiqi-service-master/ruoyi-admin
+        gcloud app deploy app.yaml --quiet --verbosity=debug
 
 timeout: 7200s  # 2 hours

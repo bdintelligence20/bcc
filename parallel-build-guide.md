@@ -8,8 +8,8 @@ The BAIC Global application has been split into five separate build configuratio
 
 1. **GeoIP Service** (Cloud Run)
 2. **Frontend** (App Engine)
-3. **Admin Backend Service** (Cloud Run - ruoyi-admin)
-4. **Web Backend Service** (Cloud Run - ruoyi-web)
+3. **Admin Backend Service** (App Engine Flexible - ruoyi-admin)
+4. **Web Backend Service** (App Engine Flexible - ruoyi-web)
 5. **Admin Panel** (App Engine)
 
 Each component has its own Cloud Build configuration file and trigger, allowing them to be built and deployed independently and concurrently.
@@ -27,8 +27,8 @@ The following Cloud Build configuration files have been created:
 
 - `cloudbuild-geoip.yaml`: Builds and deploys the GeoIP service to Cloud Run
 - `cloudbuild-frontend.yaml`: Builds and deploys the Frontend to App Engine
-- `cloudbuild-admin-backend.yaml`: Builds and deploys the Backend Admin to Cloud Run
-- `cloudbuild-web-backend.yaml`: Builds and deploys the Backend Web to Cloud Run
+- `cloudbuild-admin-backend.yaml`: Builds and deploys the Backend Admin to App Engine Flexible
+- `cloudbuild-web-backend.yaml`: Builds and deploys the Backend Web to App Engine Flexible
 - `cloudbuild-admin.yaml`: Builds and deploys the Admin Panel to App Engine
 
 ## Setting Up Cloud Build Triggers

@@ -14,7 +14,26 @@ resources:
   memory_gb: 6
   disk_size_gb: 10
 
+# Enhanced health check configuration
+health_check:
+  enable_health_check: True
+  check_interval_sec: 30
+  timeout_sec: 10
+  unhealthy_threshold: 2
+  healthy_threshold: 2
+
+# Extended startup timeout
+readiness_check:
+  path: "/"
+  check_interval_sec: 30
+  timeout_sec: 10
+  failure_threshold: 2
+  success_threshold: 2
+  app_start_timeout_sec: 600
+
+# Enhanced environment variables
 env_variables:
   SPRING_PROFILES_ACTIVE: prod
   SPRING_DATASOURCE_URL: jdbc:mysql:///ruoyi?cloudSqlInstance=baic-457613:us-central1:baic-mysql&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=ruoyi&password=Stellies21!@&useSSL=false
   SERVER_PORT: 8080
+  JAVA_OPTS: "-Xms1024m -Xmx4096m -XX:+UseG1GC -XX:+UseStringDeduplication -Dserver.port=8080"
