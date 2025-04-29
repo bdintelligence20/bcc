@@ -89,56 +89,30 @@ steps:
       - |
         chmod +x vm-deploy.sh
         
-        # Use absolute paths for SSH keys
-        SSH_DIR="/root/.ssh"
-        SSH_KEY="${SSH_DIR}/google_compute_engine"
-        SSH_KEY_PUB="${SSH_KEY}.pub"
+        # Set up SSH for Cloud Build
+        mkdir -p /root/.ssh
+        ssh-keygen -t rsa -f /root/.ssh/google_compute_engine -N "" -q
         
-        # Ensure SSH directory exists
-        mkdir -p ${SSH_DIR}
-        
-        # Generate SSH key
-        echo "Generating SSH key..."
-        ssh-keygen -t rsa -f ${SSH_KEY} -N "" -q
-        
-        # Display the key for debugging
-        echo "SSH key generated:"
-        cat ${SSH_KEY_PUB}
-        
-        # Create VM if it doesn't exist - using hardcoded values to avoid substitution issues
-        if ! gcloud compute instances describe baic-backend-vm --zone=us-central1-a &>/dev/null; then
-          echo "Creating VM baic-backend-vm..."
-          gcloud compute instances create baic-backend-vm \
-            --zone=us-central1-a \
-            --machine-type=e2-standard-2 \
-            --boot-disk-size=20GB \
-            --image-family=debian-11 \
-            --image-project=debian-cloud \
-            --tags=http-server,https-server
-        fi
-        
-        # Add the key to the VM's metadata directly - using hardcoded values
-        echo "Adding SSH key to VM metadata..."
-        gcloud compute instances add-metadata baic-backend-vm --zone=us-central1-a --metadata="ssh-keys=$(whoami):$(cat ${SSH_KEY_PUB})"
+        # Add the SSH key to the VM's metadata
+        gcloud compute instances add-metadata baic-backend-vm --zone=us-central1-a --metadata-from-file=ssh-keys=/root/.ssh/google_compute_engine.pub
         
         # Configure SSH to not check host keys
-        echo "Configuring SSH..."
-        mkdir -p ${SSH_DIR}
-        echo "Host *" > ${SSH_DIR}/config
-        echo "  StrictHostKeyChecking no" >> ${SSH_DIR}/config
-        echo "  UserKnownHostsFile /dev/null" >> ${SSH_DIR}/config
-        chmod 600 ${SSH_DIR}/config
+        cat > /root/.ssh/config << EOF
+        Host *
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        EOF
+        chmod 600 /root/.ssh/config
         
+        # Wait for SSH key propagation
+        sleep 30
+  
   # Deploy to VM with increased timeout
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: bash
     args:
       - '-c'
       - |
-        # Wait for SSH key propagation
-        echo "Waiting for SSH key propagation..."
-        sleep 30
-        
         # Run deployment script
         ./vm-deploy.sh
     timeout: 1800s  # 30 minutes
