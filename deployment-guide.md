@@ -99,14 +99,23 @@ The cloudbuild.yaml file has been configured to:
    - Location: `Repository`
    - Cloud Build configuration file location: `cloudbuild-frontend.yaml`
 
-### Backend Trigger
-   - Name: `baic-backend-trigger`
+### Admin Backend Trigger
+   - Name: `baic-admin-backend-trigger`
    - Event: `Push to a branch`
    - Source: `^master$`
-   - Included files filter: `beiqi-service-master/**`
+   - Included files filter: `beiqi-service-master/beiqi-service-master/ruoyi-admin/**`
    - Configuration: `Cloud Build configuration file (yaml or json)`
    - Location: `Repository`
-   - Cloud Build configuration file location: `cloudbuild-backend.yaml`
+   - Cloud Build configuration file location: `cloudbuild-admin-backend.yaml`
+
+### Web Backend Trigger
+   - Name: `baic-web-backend-trigger`
+   - Event: `Push to a branch`
+   - Source: `^master$`
+   - Included files filter: `beiqi-service-master/beiqi-service-master/ruoyi-web/**`
+   - Configuration: `Cloud Build configuration file (yaml or json)`
+   - Location: `Repository`
+   - Cloud Build configuration file location: `cloudbuild-web-backend.yaml`
 
 ### Admin Panel Trigger
    - Name: `baic-admin-trigger`
@@ -137,8 +146,8 @@ After the build completes, you can access your applications at:
 
 - Frontend: `https://frontend-dot-YOUR_PROJECT_ID.appspot.com/`
 - Admin Panel: `https://admin-panel-dot-YOUR_PROJECT_ID.appspot.com/`
-- Backend Admin: `https://admin-backend-dot-YOUR_PROJECT_ID.appspot.com/`
-- Backend Web: `https://web-backend-dot-YOUR_PROJECT_ID.appspot.com/`
+- Backend Admin: `https://beiqi-admin-backend-RANDOM_HASH-uc.a.run.app/`
+- Backend Web: `https://beiqi-web-backend-RANDOM_HASH-uc.a.run.app/`
 - GeoIP Service: `https://beiqi-geoip-RANDOM_HASH-uc.a.run.app/`
 
 Replace `YOUR_PROJECT_ID` with your actual GCP project ID.

@@ -1,0 +1,78 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # Create a Cloud Storage bucket for uploads if it doesn't exist
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        gsutil ls -b gs://baic-uploads || gsutil mb -l us-central1 gs://baic-uploads
+        gsutil iam ch allUsers:objectViewer gs://baic-uploads
+
+  # Copy uploads directory to Cloud Storage
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        if [ -d "./uploadPath" ]; then
+          gsutil -m cp -r ./uploadPath/* gs://baic-uploads/
+          echo "Uploads directory copied to Cloud Storage from ./uploadPath"
+        elif [ -d "./beiqi-service-master/beiqi-service-master/uploadPath" ]; then
+          gsutil -m cp -r ./beiqi-service-master/beiqi-service-master/uploadPath/* gs://baic-uploads/
+          echo "Uploads directory copied to Cloud Storage from ./beiqi-service-master/beiqi-service-master/uploadPath"
+        else
+          echo "Uploads directory not found, skipping copy"
+        fi
+
+  # Deploy Backend Admin to App Engine
+  # First, update configuration files
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        cd beiqi-service-master/beiqi-service-master
+        # Update the database connection in application-prod.yml
+        sed -i 's|jdbc:mysql:///ruoyi?cloudSqlInstance=.*&useSSL=false|jdbc:mysql:///ruoyi?cloudSqlInstance=baic-457613:us-central1:baic-mysql\&socketFactory=com.google.cloud.sql.mysql.SocketFactory\&user=ruoyi\&password=Stellies21!@\&useSSL=false|g' ruoyi-admin/src/main/resources/application-prod.yml
+        
+        # Update the file upload path to use Cloud Storage
+        if grep -q "profile:" ruoyi-admin/src/main/resources/application-prod.yml; then
+          sed -i 's|profile:.*|profile: /uploads|g' ruoyi-admin/src/main/resources/application-prod.yml
+        else
+          echo "ruoyi:" >> ruoyi-admin/src/main/resources/application-prod.yml
+          echo "  profile: /uploads" >> ruoyi-admin/src/main/resources/application-prod.yml
+        fi
+        
+        if grep -q "local-storage-path:" ruoyi-admin/src/main/resources/application-prod.yml; then
+          sed -i 's|local-storage-path:.*|local-storage-path: /uploads|g' ruoyi-admin/src/main/resources/application-prod.yml
+        else
+          echo "ufo:" >> ruoyi-admin/src/main/resources/application-prod.yml
+          echo "  local-storage-path: /uploads" >> ruoyi-admin/src/main/resources/application-prod.yml
+        fi
+  
+  # Build the Java project with Maven
+  - name: 'maven:3.8-openjdk-8'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        cd beiqi-service-master/beiqi-service-master
+        # Build only the admin module and its dependencies
+        mvn clean package -DskipTests -pl ruoyi-admin -am
+  
+  # Build and deploy the admin backend to Cloud Run
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/beiqi-admin-backend', './beiqi-service-master/beiqi-service-master/ruoyi-admin']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/beiqi-admin-backend']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: ['run', 'deploy', 'beiqi-admin-backend', '--image', 'gcr.io/$PROJECT_ID/beiqi-admin-backend', '--region', 'us-central1', '--platform', 'managed', '--allow-unauthenticated', '--memory', '2Gi', '--cpu', '2', '--timeout=5m']
+
+images:
+  - 'gcr.io/$PROJECT_ID/beiqi-admin-backend'
+
+timeout: 7200s  # 2 hours

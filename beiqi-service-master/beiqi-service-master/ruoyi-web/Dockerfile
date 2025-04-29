@@ -5,8 +5,10 @@ WORKDIR /app
 COPY target/ruoyi-web.jar app.jar
 
 ENV SPRING_PROFILES_ACTIVE=prod
-ENV SERVER_PORT=8080
+ENV PORT=8080
+ENV SERVER_PORT=${PORT}
 
-EXPOSE 8080
+EXPOSE ${PORT}
 
-CMD ["java", "-jar", "app.jar"]
+# Explicitly set server.port to use the PORT environment variable
+CMD ["sh", "-c", "java -jar -Dserver.port=${PORT} app.jar"]
