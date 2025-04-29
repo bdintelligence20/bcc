@@ -4,11 +4,13 @@ WORKDIR /app
 
 COPY target/ruoyi-admin.jar app.jar
 
+# Set environment variables
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV PORT=8080
-ENV SERVER_PORT=${PORT}
+ENV JAVA_OPTS="-Xms512m -Xmx1024m -Dserver.port=${PORT} -Dspring.profiles.active=prod"
 
+# Expose the port
 EXPOSE ${PORT}
 
-# Explicitly set server.port to use the PORT environment variable
-CMD ["sh", "-c", "java -jar -Dserver.port=${PORT} app.jar"]
+# Use a simple startup command with health check options
+CMD java ${JAVA_OPTS} -jar app.jar

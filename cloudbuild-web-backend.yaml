@@ -70,7 +70,7 @@ steps:
     args: ['push', 'gcr.io/$PROJECT_ID/beiqi-web-backend']
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
-    args: ['run', 'deploy', 'beiqi-web-backend', '--image', 'gcr.io/$PROJECT_ID/beiqi-web-backend', '--region', 'us-central1', '--platform', 'managed', '--allow-unauthenticated', '--memory', '2Gi', '--cpu', '2', '--timeout=5m']
+    args: ['run', 'deploy', 'beiqi-web-backend', '--image', 'gcr.io/$PROJECT_ID/beiqi-web-backend', '--region', 'us-central1', '--platform', 'managed', '--allow-unauthenticated', '--memory', '4Gi', '--cpu', '2', '--timeout=10m', '--min-instances=1']
 
 images:
   - 'gcr.io/$PROJECT_ID/beiqi-web-backend'
