@@ -100,15 +100,11 @@ steps:
         # Add SSH key to project metadata - using a different approach to avoid substitution issues
         gcloud compute os-login ssh-keys add --key-file=~/.ssh/google_compute_engine.pub
         
-        # Define VM variables
-        export VM_NAME="baic-backend-vm"
-        export VM_ZONE="us-central1-a"
-        
-        # Create VM if it doesn't exist
-        if ! gcloud compute instances describe $VM_NAME --zone=$VM_ZONE &>/dev/null; then
-          echo "Creating VM $VM_NAME..."
-          gcloud compute instances create $VM_NAME \
-            --zone=$VM_ZONE \
+        # Create VM if it doesn't exist - using hardcoded values to avoid substitution issues
+        if ! gcloud compute instances describe baic-backend-vm --zone=us-central1-a &>/dev/null; then
+          echo "Creating VM baic-backend-vm..."
+          gcloud compute instances create baic-backend-vm \
+            --zone=us-central1-a \
             --machine-type=e2-standard-2 \
             --boot-disk-size=20GB \
             --image-family=debian-11 \
@@ -116,8 +112,8 @@ steps:
             --tags=http-server,https-server
         fi
         
-        # Also add the key to the VM's metadata directly
-        gcloud compute instances add-metadata $VM_NAME --zone=$VM_ZONE --metadata-from-file=ssh-keys=~/.ssh/google_compute_engine.pub
+        # Also add the key to the VM's metadata directly - using hardcoded values
+        gcloud compute instances add-metadata baic-backend-vm --zone=us-central1-a --metadata-from-file=ssh-keys=~/.ssh/google_compute_engine.pub
         
   # Deploy to VM with increased timeout
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'

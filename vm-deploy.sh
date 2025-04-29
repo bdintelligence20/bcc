@@ -16,15 +16,15 @@ echo "Starting simplified deployment to VM $VM_NAME in zone $VM_ZONE..."
 
 # Setup VM if needed
 echo "Setting up VM..."
-gcloud compute ssh $VM_NAME --zone=$VM_ZONE --command="sudo mkdir -p $REMOTE_DIR $REMOTE_DIR/logs && sudo chmod 777 $REMOTE_DIR"
+gcloud compute ssh "$VM_NAME" --zone="$VM_ZONE" --command="sudo mkdir -p $REMOTE_DIR $REMOTE_DIR/logs && sudo chmod 777 $REMOTE_DIR"
 
 # Install Java if needed
 echo "Ensuring Java is installed..."
-gcloud compute ssh $VM_NAME --zone=$VM_ZONE --command="which java || sudo apt-get update && sudo apt-get install -y openjdk-8-jdk"
+gcloud compute ssh "$VM_NAME" --zone="$VM_ZONE" --command="which java || sudo apt-get update && sudo apt-get install -y openjdk-8-jdk"
 
 # Create systemd service files if they don't exist
 echo "Setting up systemd services..."
-gcloud compute ssh $VM_NAME --zone=$VM_ZONE --command="
+gcloud compute ssh "$VM_NAME" --zone="$VM_ZONE" --command="
 if [ ! -f /etc/systemd/system/$ADMIN_SERVICE.service ]; then
   sudo bash -c 'cat > /etc/systemd/system/$ADMIN_SERVICE.service << EOF
 [Unit]
@@ -74,23 +74,23 @@ sudo systemctl enable $WEB_SERVICE
 
 # Copy JAR files to VM
 echo "Copying JAR files to VM..."
-gcloud compute scp $ADMIN_JAR_PATH $VM_NAME:~/ruoyi-admin.jar --zone=$VM_ZONE
-gcloud compute scp $WEB_JAR_PATH $VM_NAME:~/ruoyi-web.jar --zone=$VM_ZONE
+gcloud compute scp "$ADMIN_JAR_PATH" "$VM_NAME":~/ruoyi-admin.jar --zone="$VM_ZONE"
+gcloud compute scp "$WEB_JAR_PATH" "$VM_NAME":~/ruoyi-web.jar --zone="$VM_ZONE"
 
 # Move JAR files to the proper location
 echo "Moving JAR files to the proper location..."
-gcloud compute ssh $VM_NAME --zone=$VM_ZONE --command="sudo mv ~/ruoyi-admin.jar $REMOTE_DIR/ruoyi-admin.jar && sudo mv ~/ruoyi-web.jar $REMOTE_DIR/ruoyi-web.jar && sudo chown -R root:root $REMOTE_DIR"
+gcloud compute ssh "$VM_NAME" --zone="$VM_ZONE" --command="sudo mv ~/ruoyi-admin.jar $REMOTE_DIR/ruoyi-admin.jar && sudo mv ~/ruoyi-web.jar $REMOTE_DIR/ruoyi-web.jar && sudo chown -R root:root $REMOTE_DIR"
 
 # Restart services
 echo "Restarting services..."
-gcloud compute ssh $VM_NAME --zone=$VM_ZONE --command="sudo systemctl restart $ADMIN_SERVICE && sudo systemctl restart $WEB_SERVICE"
+gcloud compute ssh "$VM_NAME" --zone="$VM_ZONE" --command="sudo systemctl restart $ADMIN_SERVICE && sudo systemctl restart $WEB_SERVICE"
 
 # Check service status
 echo "Checking service status..."
-gcloud compute ssh $VM_NAME --zone=$VM_ZONE --command="sudo systemctl status $ADMIN_SERVICE && sudo systemctl status $WEB_SERVICE"
+gcloud compute ssh "$VM_NAME" --zone="$VM_ZONE" --command="sudo systemctl status $ADMIN_SERVICE && sudo systemctl status $WEB_SERVICE"
 
 # Print access information
-EXTERNAL_IP=$(gcloud compute instances describe $VM_NAME --zone=$VM_ZONE --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+EXTERNAL_IP=$(gcloud compute instances describe "$VM_NAME" --zone="$VM_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 echo "Services are now available at:"
 echo "Admin Backend: http://$EXTERNAL_IP:8080"
 echo "Web Backend: http://$EXTERNAL_IP:8080"
