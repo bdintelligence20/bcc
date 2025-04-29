@@ -30,6 +30,104 @@ steps:
           echo "@import 'element-variables';" >> assets/scss/index.scss
           echo "@import 'fonts';" >> assets/scss/index.scss
         fi
+        
+        # Fix client-side only plugins to prevent SSR errors
+        echo "Updating plugins for SSR compatibility..."
+        
+        # Update vue-animate-number.js
+        echo "import Vue from 'vue'" > plugins/vue-animate-number.js
+        echo "" >> plugins/vue-animate-number.js
+        echo "// Only run on client-side to avoid requestAnimationFrame errors in SSR" >> plugins/vue-animate-number.js
+        echo "if (process.client) {" >> plugins/vue-animate-number.js
+        echo "  const VueAnimateNumber = require('vue-animate-number')" >> plugins/vue-animate-number.js
+        echo "  Vue.use(VueAnimateNumber)" >> plugins/vue-animate-number.js
+        echo "}" >> plugins/vue-animate-number.js
+        
+        # Update vue-echarts.js
+        echo "import Vue from 'vue';" > plugins/vue-echarts.js
+        echo "" >> plugins/vue-echarts.js
+        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/vue-echarts.js
+        echo "if (process.client) {" >> plugins/vue-echarts.js
+        echo "  const echarts = require('echarts/core');" >> plugins/vue-echarts.js
+        echo "" >> plugins/vue-echarts.js
+        echo "  // Import chart components" >> plugins/vue-echarts.js
+        echo "  const { PieChart } = require('echarts/charts');" >> plugins/vue-echarts.js
+        echo "  const { DatasetComponent } = require('echarts/components');" >> plugins/vue-echarts.js
+        echo "  const { UniversalTransition } = require('echarts/features');" >> plugins/vue-echarts.js
+        echo "  const { CanvasRenderer } = require('echarts/renderers');" >> plugins/vue-echarts.js
+        echo "" >> plugins/vue-echarts.js
+        echo "  // Register components" >> plugins/vue-echarts.js
+        echo "  echarts.use([" >> plugins/vue-echarts.js
+        echo "    DatasetComponent," >> plugins/vue-echarts.js
+        echo "    PieChart," >> plugins/vue-echarts.js
+        echo "    UniversalTransition," >> plugins/vue-echarts.js
+        echo "    CanvasRenderer" >> plugins/vue-echarts.js
+        echo "  ])" >> plugins/vue-echarts.js
+        echo "" >> plugins/vue-echarts.js
+        echo "  Vue.prototype.\$echarts = echarts" >> plugins/vue-echarts.js
+        echo "}" >> plugins/vue-echarts.js
+        
+        # Update vue-lazyload.js
+        echo "import Vue from 'vue'" > plugins/vue-lazyload.js
+        echo "" >> plugins/vue-lazyload.js
+        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/vue-lazyload.js
+        echo "if (process.client) {" >> plugins/vue-lazyload.js
+        echo "  const VueLazyload = require('vue-lazyload')" >> plugins/vue-lazyload.js
+        echo "  // or with options" >> plugins/vue-lazyload.js
+        echo "  Vue.use(VueLazyload, {" >> plugins/vue-lazyload.js
+        echo "    preLoad: 1.3," >> plugins/vue-lazyload.js
+        echo "    loading: ''," >> plugins/vue-lazyload.js
+        echo "    attempt: 1," >> plugins/vue-lazyload.js
+        echo "    throttleWait: 100," >> plugins/vue-lazyload.js
+        echo "    observer: true" >> plugins/vue-lazyload.js
+        echo "  })" >> plugins/vue-lazyload.js
+        echo "}" >> plugins/vue-lazyload.js
+        
+        # Update vue-tel-input.js
+        echo "import Vue from 'vue';" > plugins/vue-tel-input.js
+        echo "" >> plugins/vue-tel-input.js
+        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/vue-tel-input.js
+        echo "if (process.client) {" >> plugins/vue-tel-input.js
+        echo "  const VueTelInput = require('vue-tel-input');" >> plugins/vue-tel-input.js
+        echo "  // Use the default country list provided by the library" >> plugins/vue-tel-input.js
+        echo "  Vue.use(VueTelInput);" >> plugins/vue-tel-input.js
+        echo "}" >> plugins/vue-tel-input.js
+        
+        # Update mq.js
+        echo "import Vue from 'vue'" > plugins/mq.js
+        echo "" >> plugins/mq.js
+        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/mq.js
+        echo "if (process.client) {" >> plugins/mq.js
+        echo "  const VueMq = require('vue-mq')" >> plugins/mq.js
+        echo "  Vue.use(VueMq, {" >> plugins/mq.js
+        echo "    // should always be matching tailwind breakpoints" >> plugins/mq.js
+        echo "    breakpoints: {" >> plugins/mq.js
+        echo "      xs: 768," >> plugins/mq.js
+        echo "      sm: 992," >> plugins/mq.js
+        echo "      md: 1200," >> plugins/mq.js
+        echo "      lg: 1920," >> plugins/mq.js
+        echo "      xl: Infinity" >> plugins/mq.js
+        echo "    }," >> plugins/mq.js
+        echo "    defaultBreakpoint: 'lg'" >> plugins/mq.js
+        echo "  })" >> plugins/mq.js
+        echo "}" >> plugins/mq.js
+        
+        # Update swiper.js
+        echo 'import Vue from "vue";' > plugins/swiper.js
+        echo 'import "swiper/dist/css/swiper.css";' >> plugins/swiper.js
+        echo 'if (process.client) {' >> plugins/swiper.js
+        echo '  const VueAwesomeSwiper = require("vue-awesome-swiper/dist/ssr");' >> plugins/swiper.js
+        echo '  Vue.use(VueAwesomeSwiper);' >> plugins/swiper.js
+        echo '}' >> plugins/swiper.js
+        
+        # Update nuxt.config.js to specify client-side only plugins
+        sed -i 's|@/plugins/swiper|{ src: "@/plugins/swiper", mode: "client" }|g' nuxt.config.js
+        sed -i 's|@/plugins/vue-lazyload|{ src: "@/plugins/vue-lazyload", mode: "client" }|g' nuxt.config.js
+        sed -i 's|@/plugins/vue-animate-number|{ src: "@/plugins/vue-animate-number", mode: "client" }|g' nuxt.config.js
+        sed -i 's|@/plugins/vue-echarts|{ src: "@/plugins/vue-echarts", mode: "client" }|g' nuxt.config.js
+        sed -i 's|@/plugins/vue-tel-input|{ src: "@/plugins/vue-tel-input", mode: "client" }|g' nuxt.config.js
+        sed -i 's|@/plugins/mq|{ src: "@/plugins/mq", mode: "client" }|g' nuxt.config.js
+        
         # Install dependencies including the newly added ones
         npm install
         npm install --save @nuxtjs/composition-api@0.33.1
