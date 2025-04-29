@@ -93,8 +93,9 @@ steps:
         mkdir -p /root/.ssh
         ssh-keygen -t rsa -f /root/.ssh/google_compute_engine -N "" -q
         
-        # Add the SSH key to the VM's metadata
-        gcloud compute instances add-metadata baic-backend-vm --zone=us-central1-a --metadata-from-file=ssh-keys=/root/.ssh/google_compute_engine.pub
+        # Add the SSH key to the VM's metadata with proper username format
+        SSH_KEY=$(cat /root/.ssh/google_compute_engine.pub)
+        gcloud compute instances add-metadata baic-backend-vm --zone=us-central1-a --metadata="ssh-keys=cloudbuild:$SSH_KEY"
         
         # Configure SSH to not check host keys
         cat > /root/.ssh/config << EOF

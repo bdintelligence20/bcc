@@ -27,6 +27,9 @@ check_vm_exists() {
 
 # Function to create VM if it doesn't exist
 create_vm_if_needed() {
+  # Specify the username to use for SSH
+  SSH_USER="cloudbuild"
+  
   if ! check_vm_exists; then
     echo "Creating VM ${VM_NAME}..."
     gcloud compute instances create ${VM_NAME} \
@@ -49,7 +52,7 @@ create_vm_if_needed() {
     
     # Create systemd service files
     echo "Creating systemd service files..."
-    gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo bash -c 'cat > /etc/systemd/system/${ADMIN_SERVICE}.service << EOF
+    gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo bash -c 'cat > /etc/systemd/system/${ADMIN_SERVICE}.service << EOF
 [Unit]
 Description=BAIC Admin Backend Service
 After=network.target
@@ -68,7 +71,7 @@ StandardError=file:/opt/baic/logs/admin-error.log
 WantedBy=multi-user.target
 EOF'"
 
-    gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo bash -c 'cat > /etc/systemd/system/${WEB_SERVICE}.service << EOF
+    gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo bash -c 'cat > /etc/systemd/system/${WEB_SERVICE}.service << EOF
 [Unit]
 Description=BAIC Web Backend Service
 After=network.target
@@ -88,7 +91,7 @@ WantedBy=multi-user.target
 EOF'"
 
     # Enable services
-    gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo systemctl daemon-reload && sudo systemctl enable ${ADMIN_SERVICE} && sudo systemctl enable ${WEB_SERVICE}"
+    gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo systemctl daemon-reload && sudo systemctl enable ${ADMIN_SERVICE} && sudo systemctl enable ${WEB_SERVICE}"
     
     # Configure firewall rules
     echo "Configuring firewall rules..."
@@ -110,28 +113,31 @@ EOF'"
 deploy_jars() {
   echo "Deploying JAR files to VM..."
   
+  # Specify the username to use for SSH
+  SSH_USER="cloudbuild"
+  
   # Ensure remote directory exists and has proper permissions
   echo "Ensuring remote directory exists..."
-  gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo mkdir -p ${REMOTE_DIR} && sudo chmod 777 ${REMOTE_DIR}"
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo mkdir -p ${REMOTE_DIR} && sudo chmod 777 ${REMOTE_DIR}"
   
   # Copy JAR files to VM - first to home directory, then move to final location
   echo "Copying ${ADMIN_JAR_PATH} to VM..."
-  gcloud compute scp ${ADMIN_JAR_PATH} ${VM_NAME}:~/ruoyi-admin.jar --zone=${VM_ZONE}
+  gcloud compute scp ${ADMIN_JAR_PATH} ${SSH_USER}@${VM_NAME}:~/ruoyi-admin.jar --zone=${VM_ZONE}
   
   echo "Copying ${WEB_JAR_PATH} to VM..."
-  gcloud compute scp ${WEB_JAR_PATH} ${VM_NAME}:~/ruoyi-web.jar --zone=${VM_ZONE}
+  gcloud compute scp ${WEB_JAR_PATH} ${SSH_USER}@${VM_NAME}:~/ruoyi-web.jar --zone=${VM_ZONE}
   
   # Move JAR files to the proper location
   echo "Moving JAR files to the proper location..."
-  gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo mv ~/ruoyi-admin.jar ${REMOTE_DIR}/ruoyi-admin.jar && sudo mv ~/ruoyi-web.jar ${REMOTE_DIR}/ruoyi-web.jar && sudo chown -R root:root ${REMOTE_DIR}"
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo mv ~/ruoyi-admin.jar ${REMOTE_DIR}/ruoyi-admin.jar && sudo mv ~/ruoyi-web.jar ${REMOTE_DIR}/ruoyi-web.jar && sudo chown -R root:root ${REMOTE_DIR}"
   
   # Restart services
   echo "Restarting services..."
-  gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo systemctl restart ${ADMIN_SERVICE} && sudo systemctl restart ${WEB_SERVICE}"
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo systemctl restart ${ADMIN_SERVICE} && sudo systemctl restart ${WEB_SERVICE}"
   
   # Check service status
   echo "Checking service status..."
-  gcloud compute ssh ${VM_NAME} --zone=${VM_ZONE} --command="sudo systemctl status ${ADMIN_SERVICE} && sudo systemctl status ${WEB_SERVICE}"
+  gcloud compute ssh ${SSH_USER}@${VM_NAME} --zone=${VM_ZONE} --command="sudo systemctl status ${ADMIN_SERVICE} && sudo systemctl status ${WEB_SERVICE}"
 }
 
 # Main execution
@@ -141,6 +147,7 @@ deploy_jars
 echo "Deployment completed successfully!"
 
 # Print access information
+SSH_USER="cloudbuild"
 EXTERNAL_IP=$(gcloud compute instances describe ${VM_NAME} --zone=${VM_ZONE} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 echo "Services are now available at:"
 echo "Admin Backend: http://${EXTERNAL_IP}:8080"
