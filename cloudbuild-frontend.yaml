@@ -11,6 +11,17 @@ steps:
         gsutil ls -b gs://baic-uploads || gsutil mb -l us-central1 gs://baic-uploads
         gsutil iam ch allUsers:objectViewer gs://baic-uploads
 
+  # Copy configuration scripts
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        cp update-nuxt-config.sh beiqi-home-master/beiqi-home-master/
+        cp update-plugins.sh beiqi-home-master/beiqi-home-master/
+        chmod +x beiqi-home-master/beiqi-home-master/update-nuxt-config.sh
+        chmod +x beiqi-home-master/beiqi-home-master/update-plugins.sh
+
   # Deploy Frontend to App Engine
   - name: 'node:20'
     entrypoint: bash
@@ -18,6 +29,7 @@ steps:
       - '-c'
       - |
         cd beiqi-home-master/beiqi-home-master
+        
         # Create index.scss if it doesn't exist
         if [ ! -f "assets/scss/index.scss" ]; then
           echo "// Import all SCSS files" > assets/scss/index.scss
@@ -31,246 +43,9 @@ steps:
           echo "@import 'fonts';" >> assets/scss/index.scss
         fi
         
-        # Fix client-side only plugins to prevent SSR errors
-        echo "Updating plugins for SSR compatibility..."
-        
-        # Update vue-animate-number.js
-        echo "import Vue from 'vue'" > plugins/vue-animate-number.js
-        echo "" >> plugins/vue-animate-number.js
-        echo "// Only run on client-side to avoid requestAnimationFrame errors in SSR" >> plugins/vue-animate-number.js
-        echo "if (process.client) {" >> plugins/vue-animate-number.js
-        echo "  const VueAnimateNumber = require('vue-animate-number')" >> plugins/vue-animate-number.js
-        echo "  Vue.use(VueAnimateNumber)" >> plugins/vue-animate-number.js
-        echo "}" >> plugins/vue-animate-number.js
-        
-        # Update vue-echarts.js
-        echo "import Vue from 'vue';" > plugins/vue-echarts.js
-        echo "" >> plugins/vue-echarts.js
-        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/vue-echarts.js
-        echo "if (process.client) {" >> plugins/vue-echarts.js
-        echo "  const echarts = require('echarts/core');" >> plugins/vue-echarts.js
-        echo "" >> plugins/vue-echarts.js
-        echo "  // Import chart components" >> plugins/vue-echarts.js
-        echo "  const { PieChart } = require('echarts/charts');" >> plugins/vue-echarts.js
-        echo "  const { DatasetComponent } = require('echarts/components');" >> plugins/vue-echarts.js
-        echo "  const { UniversalTransition } = require('echarts/features');" >> plugins/vue-echarts.js
-        echo "  const { CanvasRenderer } = require('echarts/renderers');" >> plugins/vue-echarts.js
-        echo "" >> plugins/vue-echarts.js
-        echo "  // Register components" >> plugins/vue-echarts.js
-        echo "  echarts.use([" >> plugins/vue-echarts.js
-        echo "    DatasetComponent," >> plugins/vue-echarts.js
-        echo "    PieChart," >> plugins/vue-echarts.js
-        echo "    UniversalTransition," >> plugins/vue-echarts.js
-        echo "    CanvasRenderer" >> plugins/vue-echarts.js
-        echo "  ])" >> plugins/vue-echarts.js
-        echo "" >> plugins/vue-echarts.js
-        echo "  Vue.prototype.\$echarts = echarts" >> plugins/vue-echarts.js
-        echo "}" >> plugins/vue-echarts.js
-        
-        # Update vue-lazyload.js
-        echo "import Vue from 'vue'" > plugins/vue-lazyload.js
-        echo "" >> plugins/vue-lazyload.js
-        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/vue-lazyload.js
-        echo "if (process.client) {" >> plugins/vue-lazyload.js
-        echo "  const VueLazyload = require('vue-lazyload')" >> plugins/vue-lazyload.js
-        echo "  // or with options" >> plugins/vue-lazyload.js
-        echo "  Vue.use(VueLazyload, {" >> plugins/vue-lazyload.js
-        echo "    preLoad: 1.3," >> plugins/vue-lazyload.js
-        echo "    loading: ''," >> plugins/vue-lazyload.js
-        echo "    attempt: 1," >> plugins/vue-lazyload.js
-        echo "    throttleWait: 100," >> plugins/vue-lazyload.js
-        echo "    observer: true" >> plugins/vue-lazyload.js
-        echo "  })" >> plugins/vue-lazyload.js
-        echo "}" >> plugins/vue-lazyload.js
-        
-        # Update vue-tel-input.js
-        echo "import Vue from 'vue';" > plugins/vue-tel-input.js
-        echo "" >> plugins/vue-tel-input.js
-        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/vue-tel-input.js
-        echo "if (process.client) {" >> plugins/vue-tel-input.js
-        echo "  const VueTelInput = require('vue-tel-input');" >> plugins/vue-tel-input.js
-        echo "  // Use the default country list provided by the library" >> plugins/vue-tel-input.js
-        echo "  Vue.use(VueTelInput);" >> plugins/vue-tel-input.js
-        echo "}" >> plugins/vue-tel-input.js
-        
-        # Update mq.js
-        echo "import Vue from 'vue'" > plugins/mq.js
-        echo "" >> plugins/mq.js
-        echo "// Only run on client-side to avoid browser API errors in SSR" >> plugins/mq.js
-        echo "if (process.client) {" >> plugins/mq.js
-        echo "  const VueMq = require('vue-mq')" >> plugins/mq.js
-        echo "  Vue.use(VueMq, {" >> plugins/mq.js
-        echo "    // should always be matching tailwind breakpoints" >> plugins/mq.js
-        echo "    breakpoints: {" >> plugins/mq.js
-        echo "      xs: 768," >> plugins/mq.js
-        echo "      sm: 992," >> plugins/mq.js
-        echo "      md: 1200," >> plugins/mq.js
-        echo "      lg: 1920," >> plugins/mq.js
-        echo "      xl: Infinity" >> plugins/mq.js
-        echo "    }," >> plugins/mq.js
-        echo "    defaultBreakpoint: 'lg'" >> plugins/mq.js
-        echo "  })" >> plugins/mq.js
-        echo "}" >> plugins/mq.js
-        
-        # Update swiper.js
-        echo 'import Vue from "vue";' > plugins/swiper.js
-        echo 'import "swiper/dist/css/swiper.css";' >> plugins/swiper.js
-        echo 'if (process.client) {' >> plugins/swiper.js
-        echo '  const VueAwesomeSwiper = require("vue-awesome-swiper/dist/ssr");' >> plugins/swiper.js
-        echo '  Vue.use(VueAwesomeSwiper);' >> plugins/swiper.js
-        echo '}' >> plugins/swiper.js
-        
-        # Create a new nuxt.config.js file with the correct configuration
-        echo "// Production version of nuxt.config.js for deployment" > nuxt.config.js
-        echo "import path from 'path'" >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "export default {" >> nuxt.config.js
-        echo "  server: {" >> nuxt.config.js
-        echo "    host: '0.0.0.0'," >> nuxt.config.js
-        echo "    port: 8080" >> nuxt.config.js
-        echo "  }," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Global page headers: https://go.nuxtjs.dev/config-head" >> nuxt.config.js
-        echo "  head: {" >> nuxt.config.js
-        echo "    title: 'BAIC'," >> nuxt.config.js
-        echo "    htmlAttrs: {" >> nuxt.config.js
-        echo "      lang: 'en'" >> nuxt.config.js
-        echo "    }," >> nuxt.config.js
-        echo "    meta: [" >> nuxt.config.js
-        echo "      { charset: 'utf-8' }," >> nuxt.config.js
-        echo "      { name: 'viewport', content: 'width=device-width, initial-scale=1' }," >> nuxt.config.js
-        echo "      { hid: 'description', name: 'description', content: '' }," >> nuxt.config.js
-        echo "      { name: 'format-detection', content: 'telephone=no' }" >> nuxt.config.js
-        echo "    ]," >> nuxt.config.js
-        echo "    link: [" >> nuxt.config.js
-        echo "      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }" >> nuxt.config.js
-        echo "    ]" >> nuxt.config.js
-        echo "  }," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Global CSS: https://go.nuxtjs.dev/config-css" >> nuxt.config.js
-        echo "  css: [" >> nuxt.config.js
-        echo "    'element-ui/lib/theme-chalk/index.css'," >> nuxt.config.js
-        echo "    '@/assets/scss/index.scss'" >> nuxt.config.js
-        echo "  ]," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins" >> nuxt.config.js
-        echo "  plugins: [" >> nuxt.config.js
-        echo "    '@/plugins/element-ui'," >> nuxt.config.js
-        echo "    '@/plugins/i18n'," >> nuxt.config.js
-        echo "    { src: '@/plugins/swiper', mode: 'client' }," >> nuxt.config.js
-        echo "    { src: '@/plugins/vue-lazyload', mode: 'client' }," >> nuxt.config.js
-        echo "    { src: '@/plugins/vue-animate-number', mode: 'client' }," >> nuxt.config.js
-        echo "    { src: '@/plugins/vue-echarts', mode: 'client' }," >> nuxt.config.js
-        echo "    { src: '@/plugins/vue-tel-input', mode: 'client' }," >> nuxt.config.js
-        echo "    { src: '@/plugins/mq', mode: 'client' }," >> nuxt.config.js
-        echo "    '@/plugins/nav'," >> nuxt.config.js
-        echo "    '@/plugins/news'," >> nuxt.config.js
-        echo "    '@/plugins/api-plugin'," >> nuxt.config.js
-        echo "    { src: '@/plugins/gtag', mode: 'client' }" >> nuxt.config.js
-        echo "  ]," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Auto import components: https://go.nuxtjs.dev/config-components" >> nuxt.config.js
-        echo "  components: true," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules" >> nuxt.config.js
-        echo "  buildModules: [" >> nuxt.config.js
-        echo "    // https://go.nuxtjs.dev/eslint" >> nuxt.config.js
-        echo "    '@nuxtjs/eslint-module'," >> nuxt.config.js
-        echo "    '@nuxtjs/composition-api/module'" >> nuxt.config.js
-        echo "  ]," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Modules: https://go.nuxtjs.dev/config-modules" >> nuxt.config.js
-        echo "  modules: [" >> nuxt.config.js
-        echo "    // https://go.nuxtjs.dev/axios" >> nuxt.config.js
-        echo "    '@nuxtjs/axios'," >> nuxt.config.js
-        echo "    '@nuxtjs/proxy'," >> nuxt.config.js
-        echo "    '@nuxtjs/style-resources'," >> nuxt.config.js
-        echo "    '@nuxtjs/i18n'" >> nuxt.config.js
-        echo "  ]," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // i18n configuration" >> nuxt.config.js
-        echo "  i18n: {" >> nuxt.config.js
-        echo "    locales: [" >> nuxt.config.js
-        echo "      { code: 'en', iso: 'en-US', file: 'en.js' }," >> nuxt.config.js
-        echo "      { code: 'es', iso: 'es-ES', file: 'es.js' }," >> nuxt.config.js
-        echo "      { code: 'ar', iso: 'ar-SA', file: 'ar.js' }" >> nuxt.config.js
-        echo "    ]," >> nuxt.config.js
-        echo "    defaultLocale: 'en'," >> nuxt.config.js
-        echo "    langDir: 'locales/'," >> nuxt.config.js
-        echo "    vueI18n: {" >> nuxt.config.js
-        echo "      fallbackLocale: 'en'" >> nuxt.config.js
-        echo "    }," >> nuxt.config.js
-        echo "    detectBrowserLanguage: {" >> nuxt.config.js
-        echo "      useCookie: true," >> nuxt.config.js
-        echo "      cookieKey: 'i18n_redirected'," >> nuxt.config.js
-        echo "      redirectOn: 'root'" >> nuxt.config.js
-        echo "    }," >> nuxt.config.js
-        echo "    strategy: 'prefix_except_default'," >> nuxt.config.js
-        echo "    parsePages: false" >> nuxt.config.js
-        echo "  }," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Global SCSS variables" >> nuxt.config.js
-        echo "  styleResources: {" >> nuxt.config.js
-        echo "    scss: [" >> nuxt.config.js
-        echo "      '~/assets/scss/variables.scss'," >> nuxt.config.js
-        echo "      '~/assets/scss/mixins.scss'" >> nuxt.config.js
-        echo "    ]" >> nuxt.config.js
-        echo "  }," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Axios module configuration: https://go.nuxtjs.dev/config-axios" >> nuxt.config.js
-        echo "  axios: {" >> nuxt.config.js
-        echo "    proxy: true" >> nuxt.config.js
-        echo "  }," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  proxy: {" >> nuxt.config.js
-        echo "    '/home-api': {" >> nuxt.config.js
-        echo "      target: 'http://34.42.200.5:8080'," >> nuxt.config.js
-        echo "      changeOrigin: true" >> nuxt.config.js
-        echo "    }," >> nuxt.config.js
-        echo "    '/api': {" >> nuxt.config.js
-        echo "      target: 'http://34.42.200.5:8080'," >> nuxt.config.js
-        echo "      changeOrigin: true" >> nuxt.config.js
-        echo "    }," >> nuxt.config.js
-        echo "    '/geoip': {" >> nuxt.config.js
-        echo "      target: 'http://34.42.200.5:8080'," >> nuxt.config.js
-        echo "      changeOrigin: true" >> nuxt.config.js
-        echo "    }" >> nuxt.config.js
-        echo "  }," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  // Build Configuration: https://go.nuxtjs.dev/config-build" >> nuxt.config.js
-        echo "  build: {" >> nuxt.config.js
-        echo "    transpile: [/^element-ui/]," >> nuxt.config.js
-        echo "    extend(config, { isClient }) {" >> nuxt.config.js
-        echo "      // Fix asset resolution" >> nuxt.config.js
-        echo "      config.resolve.alias['~assets'] = path.resolve(__dirname, './assets');" >> nuxt.config.js
-        echo "      " >> nuxt.config.js
-        echo "      // Make file resolution case-insensitive" >> nuxt.config.js
-        echo "      config.resolve.plugins = config.resolve.plugins || [];" >> nuxt.config.js
-        echo "      " >> nuxt.config.js
-        echo "      // Add proper handling for webp files" >> nuxt.config.js
-        echo "      const webpRule = {" >> nuxt.config.js
-        echo "        test: /\\.(webp)$/i," >> nuxt.config.js
-        echo "        loader: 'file-loader'," >> nuxt.config.js
-        echo "        options: {" >> nuxt.config.js
-        echo "          name: '[path][name].[ext]'" >> nuxt.config.js
-        echo "        }" >> nuxt.config.js
-        echo "      };" >> nuxt.config.js
-        echo "      config.module.rules.push(webpRule);" >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "      // Add proper handling for i18n blocks in Vue components" >> nuxt.config.js
-        echo "      config.module.rules.push({" >> nuxt.config.js
-        echo "        resourceQuery: /blockType=i18n/," >> nuxt.config.js
-        echo "        type: 'javascript/auto'," >> nuxt.config.js
-        echo "        loader: '@intlify/vue-i18n-loader'" >> nuxt.config.js
-        echo "      });" >> nuxt.config.js
-        echo "    }" >> nuxt.config.js
-        echo "  }," >> nuxt.config.js
-        echo "" >> nuxt.config.js
-        echo "  router: {" >> nuxt.config.js
-        echo "    middleware: []" >> nuxt.config.js
-        echo "  }" >> nuxt.config.js
-        echo "}" >> nuxt.config.js
-        echo "nuxt.config.js updated successfully!"
+        # Run the scripts to update the configuration
+        ./update-plugins.sh
+        ./update-nuxt-config.sh
         
         # Install dependencies including the newly added ones
         npm install
