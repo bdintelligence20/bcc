@@ -41,7 +41,7 @@ create_vm_if_needed() {
       --tags=http-server,https-server \
       --metadata=startup-script='#! /bin/bash
         apt-get update
-        apt-get install -y openjdk-8-jdk
+        apt-get install -y openjdk-11-jdk
         mkdir -p /opt/baic
         mkdir -p /opt/baic/logs
       '
@@ -138,9 +138,9 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/baic
-Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
-Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
-ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/admin.log
@@ -162,9 +162,9 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/baic
-Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
-Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
-ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/web.log
@@ -208,15 +208,15 @@ EOFLOCAL
 #!/bin/bash
 set -e
 
-# Install Java 8 explicitly
-echo "Installing Java 8..."
+# Install Java 11
+echo "Installing Java 11..."
 sudo apt-get update
-sudo apt-get install -y openjdk-8-jdk || sudo apt-get install -y openjdk-11-jdk
+sudo apt-get install -y openjdk-11-jdk
 
 # Find Java installation path
 JAVA_PATH=$(sudo update-alternatives --display java | grep -o '^/.*java$' | head -n1 | sed 's/bin\/java$//')
 if [ -z "$JAVA_PATH" ]; then
-  JAVA_PATH="/usr/lib/jvm/java-8-openjdk-amd64/"
+  JAVA_PATH="/usr/lib/jvm/java-11-openjdk-amd64/"
 fi
 echo "Java installation path: $JAVA_PATH"
 
@@ -416,9 +416,9 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/baic
-Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
-Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
-ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-admin.yml
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-admin.yml
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/admin.log
@@ -437,9 +437,9 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/baic
-Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
-Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
-ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-web.yml
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-web.yml
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/web.log
