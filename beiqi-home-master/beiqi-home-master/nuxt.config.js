@@ -100,15 +100,15 @@ export default {
 
   proxy: {
     '/home-api': {
-      target: 'https://web-backend-dot-baic-457613.appspot.com',
+      target: 'http://34.42.200.5:8080',
       changeOrigin: true
     },
     '/api': {
-      target: 'https://baic-457613.appspot.com',
+      target: 'http://34.42.200.5:8080',
       changeOrigin: true
     },
     '/geoip': {
-      target: 'https://geoip-RANDOM_HASH-uc.a.run.app',
+      target: 'http://34.42.200.5:8080',
       changeOrigin: true
     }
   },

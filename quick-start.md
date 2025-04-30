@@ -1,91 +1,104 @@
-# BAIC Global Quick Start Guide
+# Quick Start Guide for BAIC Global Website Deployment
 
-This guide provides a quick overview of how to deploy the BAIC Global codebase to GitHub and Google Cloud Platform (GCP).
+This guide provides a quick and straightforward approach to deploying the BAIC Global website to Google Cloud Platform (GCP).
 
-## Step 1: Push to GitHub
+## Prerequisites
 
-### Using the provided scripts:
+- Google Cloud Platform account with billing enabled
+- Google Cloud SDK installed and configured
+- Git installed
 
-**For Linux/Mac:**
+## Deployment Steps
+
+### 1. Initialize Git Repository and Push to GitHub
+
 ```bash
-chmod +x init-git-and-push.sh
-./init-git-and-push.sh <github-username> <repository-name>
+# Initialize Git repository and push to GitHub
+./init-git-and-push.sh
 ```
 
-**For Windows:**
-```
-init-git-and-push.bat <github-username> <repository-name>
-```
+### 2. Deploy Backend Services to VM
 
-### Manually:
 ```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/<github-username>/<repository-name>.git
-git push -u origin master
+# Deploy backend services to VM
+gcloud builds submit --config=cloudbuild-vm-backend.yaml
 ```
 
-## Step 2: Set Up GCP
+This will:
+- Create a VM if it doesn't exist
+- Build and deploy both backend services (admin and web) to the VM
+- Configure the VM with the necessary environment
 
-1. Create a new GCP project or use an existing one
-2. Enable required APIs:
-   - Cloud Build API
-   - App Engine Admin API
-   - Cloud Run Admin API
-   - Cloud Storage API
-   - Cloud SQL Admin API
+### 3. Deploy Frontend Website
 
-## Step 3: Use Existing Cloud SQL Instance and File Uploads
+```bash
+# Deploy frontend website to App Engine
+gcloud builds submit --config=cloudbuild-frontend.yaml
+```
 
-### Database Configuration
-The project is already configured to use an existing Cloud SQL instance:
+This will:
+- Build the Nuxt.js application
+- Configure it to connect to the backend services on the VM
+- Deploy it to App Engine
 
-- **Connection name**: `baic-457613:us-central1:baic-mysql`
-- **Public IP address**: `34.69.17.6`
-- **Port**: `3306`
+### 4. Deploy Admin Panel
 
-No additional setup is required for the database.
+```bash
+# Deploy admin panel to App Engine
+gcloud builds submit --config=cloudbuild-admin.yaml
+```
 
-### File Uploads
-The project uses a Cloud Storage bucket for file uploads:
+This will:
+- Build the Vue.js admin panel
+- Configure it to connect to the backend services on the VM
+- Deploy it to App Engine
 
-- The `uploadPath` directory at the root of the project contains all uploaded files
-- These files will be automatically copied to a Cloud Storage bucket during deployment
-- The application will be configured to use this bucket for file storage in production
+## Verification
 
-### Runtime Versions and Build Process
-The project has been updated to use the latest supported runtime versions and build process:
+After deployment, you can verify that everything is working correctly:
 
-- Node.js services now use Node.js 20 instead of Node.js 14 (which is deprecated)
-- The build process has been updated to use the appropriate Docker images for each step
-- Missing SCSS files are automatically created during the build process
+1. **Frontend Website**: Visit your App Engine URL (e.g., `https://baic-457613.appspot.com`)
+2. **Admin Panel**: Visit your App Engine URL with the admin path (e.g., `https://baic-457613.appspot.com/manage-panel-path/`)
+3. **Backend Services**: The backend services are running on the VM at `http://34.42.200.5:8080`
 
-## Step 4: Set Up Cloud Build Trigger
+## Troubleshooting
 
-1. Go to Cloud Build in GCP Console
-2. Connect your GitHub repository
-3. Create a build trigger:
-   - Name: `baic-global-trigger`
-   - Event: `Push to a branch`
-   - Source: `^master$`
-   - Configuration: `Cloud Build configuration file`
-   - Location: `Repository`
-   - File location: `cloudbuild.yaml`
+If you encounter any issues:
 
-## Step 5: Trigger the Build
+1. **Check Cloud Build Logs**: 
+   ```bash
+   gcloud builds list
+   gcloud builds log BUILD_ID
+   ```
 
-1. In the Cloud Build console, find your trigger
-2. Click "Run trigger"
+2. **Check App Engine Logs**:
+   ```bash
+   gcloud app logs tail
+   ```
 
-## Step 6: Access Your Application
+3. **Check VM Logs**:
+   ```bash
+   gcloud compute ssh baic-backend-vm --zone=us-central1-a
+   sudo journalctl -u baic-admin
+   sudo journalctl -u baic-web
+   ```
 
-After the build completes, access your applications at:
+## Configuration Files
 
-- Frontend: `https://frontend-dot-YOUR_PROJECT_ID.appspot.com/`
-- Admin Panel: `https://admin-panel-dot-YOUR_PROJECT_ID.appspot.com/`
-- Backend Admin: `https://YOUR_PROJECT_ID.appspot.com/`
-- Backend Web: `https://web-backend-dot-YOUR_PROJECT_ID.appspot.com/`
-- GeoIP Service: `https://beiqi-geoip-RANDOM_HASH-uc.a.run.app/`
+The key configuration files that have been updated to connect to the VM:
 
-For more detailed instructions, see the [Deployment Guide](deployment-guide.md).
+1. **Frontend**: `beiqi-home-master/beiqi-home-master/nuxt.config.js`
+   - Updated proxy configuration to point to VM IP
+
+2. **Admin Panel**: `beiqi-web-master/beiqi-web-master/.env.production`
+   - Updated API endpoint to point to VM IP
+
+3. **Build Scripts**: `cloudbuild-frontend.yaml` and `cloudbuild-admin.yaml`
+   - Updated to ensure configuration changes are preserved during deployment
+
+## Next Steps
+
+For more detailed information, refer to:
+- `simplified-deployment-guide.md` - Comprehensive deployment guide
+- `vm-deployment-guide.md` - Details on VM deployment
+- `parallel-build-guide.md` - Guide for parallel builds

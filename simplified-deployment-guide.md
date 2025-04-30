@@ -58,7 +58,15 @@ We've fixed issues with browser-specific APIs being used in server-side renderin
 - `mq.js` - Made client-side only
 - `swiper.js` - Updated to use `process.client` instead of `process.browser`
 
-### 2. Java VM Deployment
+### 2. Backend Connectivity
+
+We've updated the frontend and admin panel configurations to connect to the backend services running on the VM:
+
+- Updated the proxy configuration in `nuxt.config.js` to point to the VM IP address
+- Updated the API endpoint in `.env.production` for the admin panel to point to the VM IP address
+- Updated the build scripts to ensure these changes are preserved during deployment
+
+### 3. Java VM Deployment
 
 We've improved the Java VM deployment process by:
 

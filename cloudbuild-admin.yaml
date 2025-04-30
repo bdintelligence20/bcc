@@ -18,6 +18,14 @@ steps:
       - '-c'
       - |
         cd beiqi-web-master/beiqi-web-master
+        
+        # Update the .env.production file to point to the VM IP
+        echo "# just a flag" > .env.production
+        echo "ENV = 'production'" >> .env.production
+        echo "" >> .env.production
+        echo "# base api" >> .env.production
+        echo "VUE_APP_BASE_API = 'http://34.42.200.5:8080/api'" >> .env.production
+        
         npm install
         npm run build:prod
         
