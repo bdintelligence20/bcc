@@ -130,7 +130,7 @@ steps:
         echo "// Fix middleware issue - remove references to commented out middleware" >> update-plugins.js
         echo "config = config.replace(/middleware:\\s*\\[([\\s\\S]*?)\\]/, \"middleware: []\");" >> update-plugins.js
         echo "// Update proxy configuration to point to VM IP" >> update-plugins.js
-        echo "config = config.replace(/proxy:\\s*{[\\s\\S]*?}\\s*,/, \"proxy: {\\n    '/home-api': {\\n      target: 'http://34.42.200.5:8080',\\n      changeOrigin: true\\n    },\\n    '/api': {\\n      target: 'http://34.42.200.5:8080',\\n      changeOrigin: true\\n    },\\n    '/geoip': {\\n      target: 'http://34.42.200.5:8080',\\n      changeOrigin: true\\n    }\\n  },\\n\");" >> update-plugins.js
+        echo "config = config.replace(/proxy:\\s*{[\\s\\S]*?}/, \"proxy: {\\n    '/home-api': {\\n      target: 'http://34.42.200.5:8080',\\n      changeOrigin: true\\n    },\\n    '/api': {\\n      target: 'http://34.42.200.5:8080',\\n      changeOrigin: true\\n    },\\n    '/geoip': {\\n      target: 'http://34.42.200.5:8080',\\n      changeOrigin: true\\n    }\\n  }\");" >> update-plugins.js
         echo "fs.writeFileSync(configPath, config);" >> update-plugins.js
         echo "console.log('nuxt.config.js updated successfully!');" >> update-plugins.js
         
