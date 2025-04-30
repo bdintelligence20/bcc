@@ -1,3 +1,4 @@
+// Production version of nuxt.config.js for deployment
 import path from 'path'
 
 export default {

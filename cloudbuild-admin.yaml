@@ -20,11 +20,21 @@ steps:
         cd beiqi-web-master/beiqi-web-master
         
         # Update the .env.production file to point to the VM IP
-        echo "# just a flag" > .env.production
+        echo "port = '80'" > .env.production
+        echo "# 生产环境配置" >> .env.production
         echo "ENV = 'production'" >> .env.production
         echo "" >> .env.production
-        echo "# base api" >> .env.production
+        echo "# 接口路径" >> .env.production
         echo "VUE_APP_BASE_API = 'http://34.42.200.5:8080/api'" >> .env.production
+        echo "" >> .env.production
+        echo "# 文件路径" >> .env.production
+        echo "VUE_APP_FILE_UOLOAD_HOST = 'http://34.42.200.5:8080/file'" >> .env.production
+        echo "" >> .env.production
+        echo "# 页面标题" >> .env.production
+        echo "VUE_APP_TITLE = 北汽官网后台管理系统" >> .env.production
+        echo "" >> .env.production
+        echo "#门户地址" >> .env.production
+        echo "VUE_APP_WEB_HOST = 'https://baic-457613.appspot.com'" >> .env.production
         
         npm install
         npm run build:prod
