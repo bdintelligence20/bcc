@@ -120,13 +120,23 @@ steps:
         echo '  Vue.use(VueAwesomeSwiper);' >> plugins/swiper.js
         echo '}' >> plugins/swiper.js
         
-        # Update nuxt.config.js to specify client-side only plugins
-        sed -i 's|@/plugins/swiper|{ src: "@/plugins/swiper", mode: "client" }|g' nuxt.config.js
-        sed -i 's|@/plugins/vue-lazyload|{ src: "@/plugins/vue-lazyload", mode: "client" }|g' nuxt.config.js
-        sed -i 's|@/plugins/vue-animate-number|{ src: "@/plugins/vue-animate-number", mode: "client" }|g' nuxt.config.js
-        sed -i 's|@/plugins/vue-echarts|{ src: "@/plugins/vue-echarts", mode: "client" }|g' nuxt.config.js
-        sed -i 's|@/plugins/vue-tel-input|{ src: "@/plugins/vue-tel-input", mode: "client" }|g' nuxt.config.js
-        sed -i 's|@/plugins/mq|{ src: "@/plugins/mq", mode: "client" }|g' nuxt.config.js
+        # Create a simple script to update the plugins section and fix middleware
+        echo "console.log('Updating nuxt.config.js...');" > update-plugins.js
+        echo "const fs = require('fs');" >> update-plugins.js
+        echo "const configPath = './nuxt.config.js';" >> update-plugins.js
+        echo "let config = fs.readFileSync(configPath, 'utf8');" >> update-plugins.js
+        echo "// Update plugins to be client-side only" >> update-plugins.js
+        echo "config = config.replace(/plugins:\\s*\\[([\\s\\S]*?)\\]/, \"plugins: [\\n    '@/plugins/element-ui',\\n    '@/plugins/i18n',\\n    { src: '@/plugins/swiper', mode: 'client' },\\n    { src: '@/plugins/vue-lazyload', mode: 'client' },\\n    { src: '@/plugins/vue-animate-number', mode: 'client' },\\n    { src: '@/plugins/vue-echarts', mode: 'client' },\\n    { src: '@/plugins/vue-tel-input', mode: 'client' },\\n    { src: '@/plugins/mq', mode: 'client' },\\n    '@/plugins/nav',\\n    '@/plugins/news',\\n    '@/plugins/api-plugin',\\n    { src: '@/plugins/gtag', mode: 'client' }\\n  ]\");" >> update-plugins.js
+        echo "// Fix middleware issue - remove references to commented out middleware" >> update-plugins.js
+        echo "config = config.replace(/middleware:\\s*\\[([\\s\\S]*?)\\]/, \"middleware: []\");" >> update-plugins.js
+        echo "fs.writeFileSync(configPath, config);" >> update-plugins.js
+        echo "console.log('nuxt.config.js updated successfully!');" >> update-plugins.js
+        
+        # Run the script to update the nuxt.config.js file
+        node update-plugins.js
+        
+        # Clean up
+        rm update-plugins.js
         
         # Install dependencies including the newly added ones
         npm install

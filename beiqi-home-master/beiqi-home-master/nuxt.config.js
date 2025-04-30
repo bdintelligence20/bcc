@@ -143,6 +143,6 @@ export default {
   },
 
   router: {
-    middleware: ['browserVersion', 'axiosMiddle']
+    middleware: []
   }
 }
