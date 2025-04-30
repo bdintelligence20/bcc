@@ -248,8 +248,210 @@ ls -la /opt/baic/
 file /opt/baic/ruoyi-admin.jar
 file /opt/baic/ruoyi-web.jar
 
-# Restart services
-echo "Restarting services..."
+# Create configuration files for database connection
+echo "Creating configuration files for database connection..."
+sudo mkdir -p /opt/baic/config
+
+# Create application-prod-admin.yml
+sudo bash -c "cat > /opt/baic/application-prod-admin.yml << EOF
+# Spring configuration
+spring:
+  # Database configuration
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      # Master database
+      master:
+        url: jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+        username: ruoyi
+        password: Stellies21!@
+      # Slave database
+      slave:
+        # Whether to enable slave database
+        enabled: false
+      # Initial connection pool size
+      initialSize: 5
+      # Minimum connection pool size
+      minIdle: 10
+      # Maximum connection pool size
+      maxActive: 20
+      # Configure the time to wait for a connection to be obtained
+      maxWait: 60000
+      # Configure the interval for detecting idle connections that need to be closed
+      timeBetweenEvictionRunsMillis: 60000
+      # Configure the minimum lifetime of a connection in the pool
+      minEvictableIdleTimeMillis: 300000
+      # Configure the maximum lifetime of a connection in the pool
+      maxEvictableIdleTimeMillis: 900000
+      # Configure detection query for testing if a connection is valid
+      validationQuery: SELECT 1 FROM DUAL
+      # Enable idle connection testing
+      testWhileIdle: true
+      # Test when getting a connection
+      testOnBorrow: false
+      # Test when returning a connection
+      testOnReturn: false
+      # Enable PSCache
+      poolPreparedStatements: true
+      # Configure the size of PSCache on each connection
+      maxPoolPreparedStatementPerConnectionSize: 20
+      # Configure filters
+      filters: stat,slf4j
+      # Enable connection statistics
+      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      # Enable web monitoring
+      webStatFilter:
+        enabled: true
+      statViewServlet:
+        enabled: true
+        # Set white list, allow all access by default
+        allow:
+        url-pattern: /druid/*
+        # Login username and password for the monitoring page
+        login-username: admin
+        login-password: 123456
+      filter:
+        stat:
+          enabled: true
+          # Slow SQL recording
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+
+# Server configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+EOF"
+
+# Create application-prod-web.yml
+sudo bash -c "cat > /opt/baic/application-prod-web.yml << EOF
+# Spring configuration
+spring:
+  # Database configuration
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      # Master database
+      master:
+        url: jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+        username: ruoyi
+        password: Stellies21!@
+      # Slave database
+      slave:
+        # Whether to enable slave database
+        enabled: false
+      # Initial connection pool size
+      initialSize: 5
+      # Minimum connection pool size
+      minIdle: 10
+      # Maximum connection pool size
+      maxActive: 20
+      # Configure the time to wait for a connection to be obtained
+      maxWait: 60000
+      # Configure the interval for detecting idle connections that need to be closed
+      timeBetweenEvictionRunsMillis: 60000
+      # Configure the minimum lifetime of a connection in the pool
+      minEvictableIdleTimeMillis: 300000
+      # Configure the maximum lifetime of a connection in the pool
+      maxEvictableIdleTimeMillis: 900000
+      # Configure detection query for testing if a connection is valid
+      validationQuery: SELECT 1 FROM DUAL
+      # Enable idle connection testing
+      testWhileIdle: true
+      # Test when getting a connection
+      testOnBorrow: false
+      # Test when returning a connection
+      testOnReturn: false
+      # Enable PSCache
+      poolPreparedStatements: true
+      # Configure the size of PSCache on each connection
+      maxPoolPreparedStatementPerConnectionSize: 20
+      # Configure filters
+      filters: stat,slf4j
+      # Enable connection statistics
+      connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      # Enable web monitoring
+      webStatFilter:
+        enabled: true
+      statViewServlet:
+        enabled: true
+        # Set white list, allow all access by default
+        allow:
+        url-pattern: /druid/*
+        # Login username and password for the monitoring page
+        login-username: admin
+        login-password: 123456
+      filter:
+        stat:
+          enabled: true
+          # Slow SQL recording
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+
+# Server configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /home-api
+EOF"
+
+# Update systemd service files to use the new configuration
+sudo bash -c "cat > /etc/systemd/system/baic-admin.service << EOF
+[Unit]
+Description=BAIC Admin Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/baic
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-admin.yml
+Restart=always
+RestartSec=10
+StandardOutput=file:/opt/baic/logs/admin.log
+StandardError=file:/opt/baic/logs/admin-error.log
+
+[Install]
+WantedBy=multi-user.target
+EOF"
+
+sudo bash -c "cat > /etc/systemd/system/baic-web.service << EOF
+[Unit]
+Description=BAIC Web Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/baic
+Environment=\"JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64\"
+Environment=\"PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
+ExecStart=/usr/lib/jvm/java-8-openjdk-amd64/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-web.yml
+Restart=always
+RestartSec=10
+StandardOutput=file:/opt/baic/logs/web.log
+StandardError=file:/opt/baic/logs/web-error.log
+
+[Install]
+WantedBy=multi-user.target
+EOF"
+
+# Reload systemd and restart services
+echo "Reloading systemd and restarting services..."
+sudo systemctl daemon-reload
 sudo systemctl restart baic-admin
 sudo systemctl restart baic-web
 EOFLOCAL

@@ -1,118 +1,85 @@
-# Simplified Deployment Guide for BAIC Global Website
+# Simplified Deployment Guide for BAIC Global
 
-This guide provides a simplified approach to deploying the BAIC Global website to Google Cloud Platform (GCP).
+This guide provides a simplified approach to deploying the BAIC Global website and admin panel on Google Cloud Platform.
 
-## Overview
+## What's Been Fixed
 
-The BAIC Global website consists of several components:
+1. **Database Connection Issue**: The backend services were failing to connect to the MySQL database due to incorrect configuration. The error logs showed they were trying to connect to "localhost:3,306" (with a comma in the port number).
 
-1. **Frontend** - A Nuxt.js application
-2. **Admin Backend** - A Java Spring Boot application
-3. **Web Backend** - A Java Spring Boot application
-4. **GeoIP Service** - A Node.js microservice
+2. **Mixed Content Issues**: The admin panel was being served over HTTPS from App Engine, but it was trying to make API requests to an HTTP endpoint, which modern browsers block for security reasons.
 
-## Deployment Process
+3. **Frontend Configuration**: The frontend configuration has been updated to use relative URLs for API requests, which will work regardless of the protocol (HTTP or HTTPS).
 
-### 1. Initialize Git Repository and Push to GitHub
+## Deployment Steps - Just Push to GitHub!
 
-```bash
-# Initialize Git repository
-./init-git-and-push.sh
-```
+All the fixes have been integrated into the Cloud Build configuration files. Now you can simply:
 
-This script will:
-- Initialize a Git repository
-- Add all files to the repository
-- Create an initial commit
-- Add a remote origin (you'll need to provide your GitHub repository URL)
-- Push the code to GitHub
+1. Initialize a Git repository and push to GitHub:
+   ```bash
+   ./init-git-and-push.sh
+   ```
+   or on Windows:
+   ```bash
+   init-git-and-push.bat
+   ```
 
-### 2. Deploy to Google Cloud Platform
+2. Set up Cloud Build triggers in the Google Cloud Console to automatically deploy when changes are pushed to GitHub:
+   - Create a trigger for the backend services using `cloudbuild-vm-backend.yaml`
+   - Create a trigger for the frontend using `cloudbuild-frontend.yaml`
+   - Create a trigger for the admin panel using `cloudbuild-admin.yaml`
 
-#### Frontend Deployment
+That's it! When you push changes to GitHub, Cloud Build will automatically:
+1. Deploy the backend services to the VM with the correct database configuration
+2. Deploy the frontend to App Engine
+3. Deploy the admin panel to App Engine
 
-The frontend is deployed to App Engine using the `cloudbuild-frontend.yaml` configuration file.
+## What Changed
 
-```bash
-gcloud builds submit --config=cloudbuild-frontend.yaml
-```
+### Backend Configuration
 
-#### Backend Deployment
+1. Updated the VM deployment script (`vm-deploy.sh`) to automatically:
+   - Create external configuration files with the correct database connection URL (34.69.17.6:3306)
+   - Update the systemd service files to use these external configuration files
+   - Restart the services with the new configuration
 
-The backend services are deployed to a Compute Engine VM using the `cloudbuild-vm-backend.yaml` configuration file.
+### Admin Panel Configuration
 
-```bash
-gcloud builds submit --config=cloudbuild-vm-backend.yaml
-```
+1. Updated the admin panel to use relative URLs for API requests ('/api' instead of 'http://34.42.200.5:8080/api')
+2. Added missing configuration for file uploads and other settings
 
-## Key Fixes Implemented
+### Frontend Configuration
 
-### 1. Server-Side Rendering (SSR) Compatibility
+1. Updated the frontend proxy configuration to use relative URLs for API requests
+2. Added proper path rewriting to ensure requests are forwarded correctly
+3. Added a proxy for file uploads
 
-We've fixed issues with browser-specific APIs being used in server-side rendering by making the following plugins client-side only:
+## Accessing the Application
 
-- `vue-animate-number.js` - Fixed `requestAnimationFrame` error
-- `vue-echarts.js` - Made client-side only
-- `vue-lazyload.js` - Made client-side only
-- `vue-tel-input.js` - Simplified and made client-side only
-- `mq.js` - Made client-side only
-- `swiper.js` - Updated to use `process.client` instead of `process.browser`
+After deployment, the application will be available at:
 
-### 2. Backend Connectivity
-
-We've updated the frontend and admin panel configurations to connect to the backend services running on the VM:
-
-- Updated the proxy configuration in `nuxt.config.js` to point to the VM IP address
-- Updated the API endpoint in `.env.production` for the admin panel to point to the VM IP address
-- Updated the build scripts to ensure these changes are preserved during deployment
-
-### 3. Java VM Deployment
-
-We've improved the Java VM deployment process by:
-
-- Adding better Java detection and configuration
-- Setting the `JAVA_HOME` environment variable
-- Using the full path to the Java executable in systemd service files
-- Adding proper error handling for Java installation
-
-## Deployment Architecture
-
-```
-                   ┌─────────────────┐
-                   │                 │
-                   │  Cloud Storage  │
-                   │   (uploads)     │
-                   │                 │
-                   └────────┬────────┘
-                            │
-                            │
-┌─────────────────┐  ┌─────▼────────┐  ┌─────────────────┐
-│                 │  │              │  │                 │
-│  App Engine     │  │  Compute     │  │  Cloud SQL      │
-│  (Frontend)     │◄─┤  Engine VM   │◄─┤  (MySQL)        │
-│                 │  │  (Backend)   │  │                 │
-└─────────────────┘  └──────────────┘  └─────────────────┘
-```
+- Frontend: `https://baic-457613.appspot.com/`
+- Admin Panel: `https://admin-panel-dot-baic-457613.uc.r.appspot.com/manage-panel-path/`
+- Backend API: `http://34.42.200.5:8080/api/`
+- Backend Home API: `http://34.42.200.5:8080/home-api/`
 
 ## Troubleshooting
 
-### Frontend Issues
+If you encounter any issues:
 
-If you encounter errors with the frontend deployment, check:
+1. Check the Cloud Build logs in the Google Cloud Console
 
-1. The Cloud Build logs for any build errors
-2. The App Engine logs for runtime errors
-3. Make sure all plugins that use browser-specific APIs are configured to run only on the client side
+2. Check the backend service logs on the VM:
+   ```bash
+   gcloud compute ssh baic-backend-vm --zone=us-central1-a
+   sudo journalctl -u baic-admin.service -f
+   sudo journalctl -u baic-web.service -f
+   ```
 
-### Backend Issues
+3. Check the application logs on the VM:
+   ```bash
+   gcloud compute ssh baic-backend-vm --zone=us-central1-a
+   sudo tail -f /opt/baic/logs/admin.log
+   sudo tail -f /opt/baic/logs/web.log
+   ```
 
-If you encounter errors with the backend deployment, check:
-
-1. The Cloud Build logs for any build errors
-2. The VM logs for runtime errors
-3. Make sure Java is properly installed and configured on the VM
-4. Check the systemd service logs using `journalctl -u baic-admin` or `journalctl -u baic-web`
-
-## Conclusion
-
-This simplified approach allows for a more straightforward deployment process while maintaining the functionality of the BAIC Global website. By using GitHub for version control and Google Cloud Platform for hosting, we've created a robust and scalable deployment pipeline.
+4. Check the App Engine logs in the Google Cloud Console

@@ -106,15 +106,23 @@ export default {
   proxy: {
     '/home-api': {
       target: 'http://34.42.200.5:8080',
-      changeOrigin: true
+      changeOrigin: true,
+      pathRewrite: { '^/home-api': '/home-api' }
     },
     '/api': {
       target: 'http://34.42.200.5:8080',
-      changeOrigin: true
+      changeOrigin: true,
+      pathRewrite: { '^/api': '/api' }
     },
     '/geoip': {
       target: 'http://34.42.200.5:8080',
-      changeOrigin: true
+      changeOrigin: true,
+      pathRewrite: { '^/geoip': '/geoip' }
+    },
+    '/file': {
+      target: 'http://34.42.200.5:8080',
+      changeOrigin: true,
+      pathRewrite: { '^/file': '/file' }
     }
   },
 
