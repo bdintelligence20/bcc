@@ -1,7 +1,16 @@
 #!/bin/bash
 
+# Get the backend VM IP address
+BACKEND_IP=$(gcloud compute instances describe baic-backend-vm --zone=us-central1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+if [ -z "$BACKEND_IP" ]; then
+  echo "Error: Could not get the external IP of the backend VM."
+  echo "Using default IP address: 34.42.200.5"
+  BACKEND_IP="34.42.200.5"
+fi
+echo "Backend VM IP: $BACKEND_IP"
+
 # Create a new nuxt.config.js file with the correct configuration
-cat > nuxt.config.js << 'EOF'
+cat > nuxt.config.js << EOF
 // Production version of nuxt.config.js for deployment
 import path from 'path'
 
@@ -105,22 +114,22 @@ export default {
 
   proxy: {
     '/home-api': {
-      target: 'http://34.42.200.5:8080',
+      target: 'http://${BACKEND_IP}:8080',
       changeOrigin: true,
       pathRewrite: { '^/home-api': '/home-api' }
     },
     '/api': {
-      target: 'http://34.42.200.5:8080',
+      target: 'http://${BACKEND_IP}:8080',
       changeOrigin: true,
       pathRewrite: { '^/api': '/api' }
     },
     '/geoip': {
-      target: 'http://34.42.200.5:8080',
+      target: 'http://${BACKEND_IP}:8080',
       changeOrigin: true,
       pathRewrite: { '^/geoip': '/geoip' }
     },
     '/file': {
-      target: 'http://34.42.200.5:8080',
+      target: 'http://${BACKEND_IP}:8080',
       changeOrigin: true,
       pathRewrite: { '^/file': '/file' }
     }

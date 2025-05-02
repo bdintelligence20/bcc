@@ -47,6 +47,23 @@ steps:
     entrypoint: gcloud
     args: ['run', 'deploy', 'beiqi-geoip', '--image', 'gcr.io/$PROJECT_ID/beiqi-geoip', '--region', 'us-central1', '--platform', 'managed', '--allow-unauthenticated']
 
+  # Get the backend VM IP address
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'get-backend-ip'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        # Get the external IP of the backend VM
+        BACKEND_IP=$(gcloud compute instances describe baic-backend-vm --zone=us-central1-a --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+        if [ -z "$BACKEND_IP" ]; then
+          echo "Error: Could not get the external IP of the backend VM."
+          exit 1
+        fi
+        echo "Backend VM IP: $BACKEND_IP"
+        # Save the IP to a file for later use
+        echo "$BACKEND_IP" > /workspace/backend_ip.txt
+
   # Deploy Frontend to App Engine
   - name: 'node:20'
     entrypoint: bash
@@ -54,6 +71,22 @@ steps:
       - '-c'
       - |
         cd beiqi-home-master/beiqi-home-master
+        # Update the nuxt.config.js file with the correct backend VM IP address
+        BACKEND_IP=$(cat /workspace/backend_ip.txt)
+        echo "Updating nuxt.config.js with backend IP: $BACKEND_IP"
+        sed -i "s|target: 'http://[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+:8080'|target: 'http://$BACKEND_IP:8080'|g" nuxt.config.js
+        
+        # Fix API calls in the frontend code
+        echo "Fixing API calls in the frontend..."
+        API_FILES=$(find api/apiList -type f -name "*.js")
+        for file in $API_FILES; do
+          echo "Updating $file..."
+          # Replace URLs without prefix with /home-api prefix
+          sed -i 's|url: "/|url: "/home-api/|g' "$file"
+          # Ensure the URL doesn't have double prefixes
+          sed -i 's|url: "/home-api/home-api/|url: "/home-api/|g' "$file"
+        done
+        
         # Create index.scss if it doesn't exist
         if [ ! -f "assets/scss/index.scss" ]; then
           echo "// Import all SCSS files" > assets/scss/index.scss

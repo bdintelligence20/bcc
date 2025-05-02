@@ -52,7 +52,22 @@ This will:
 gcloud builds submit --config=cloudbuild-frontend.yaml
 ```
 
-## Step 4: Verify and Fix Issues
+## Step 4: Update Frontend Configuration
+
+After deploying the backend services, you need to update the frontend configuration to point to the correct backend VM IP address:
+
+```bash
+# Update frontend proxy configuration
+chmod +x update-frontend-proxy.sh
+./update-frontend-proxy.sh
+```
+
+This script will:
+- Get the external IP of the backend VM
+- Update the nuxt.config.js file with the correct backend VM IP address
+- Fix API calls in the frontend code
+
+## Step 5: Verify and Fix Issues
 
 If you encounter any issues with the backend services, you can use the following scripts to diagnose and fix them:
 
