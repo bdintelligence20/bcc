@@ -38,8 +38,14 @@ export default function ({$axios, i18n, route, redirect}) {
     config => {
       console.log(config.url, 'config.url')
 
-      // file开头不需要加语言
-      if (!config.url.startsWith('/file') && !config.url.startsWith('/geoip')) {
+      // Already has /home-api or /api or /geoip prefix
+      if (config.url.startsWith('/home-api') || config.url.startsWith('/api') || config.url.startsWith('/geoip') || config.url.startsWith('/file')) {
+        // Do nothing, URL already has the correct prefix
+        if (config.url.startsWith('/home-api') || config.url.startsWith('/api')) {
+          config.headers['Authorization'] = getToken()
+        }
+      } else {
+        // Add prefix based on URL type
         if (isSubStringInArray(config.url, filterateUrl)) {
           config.url = '/home-api' + config.url
           config.headers['Authorization'] = getToken()
