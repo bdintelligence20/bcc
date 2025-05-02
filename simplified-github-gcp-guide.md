@@ -5,9 +5,10 @@ This guide provides a straightforward approach to deploying the BAIC Global appl
 ## Overview of Changes Made
 
 1. **Fixed Database Connection Issues**:
-   - Updated application-dev.yml files to use the correct database URL (34.69.17.6:3306) instead of localhost
-   - Set default profile to "prod" in application.yml files
-   - Updated vm-deploy.sh to use `--spring.config.location` instead of `--spring.config.additional-location`
+   - Updated application-dev.yml and application-prod.yml files to use the local database (127.0.0.1:3306/baicintl) instead of remote database
+   - Updated cloudbuild-vm-backend.yaml to use the local database configuration
+   - Updated vm-deploy.sh to install MariaDB and create the database on the VM
+   - Added code to import the SQL file from Cloud Storage
 
 2. **Frontend Configuration**:
    - Updated nuxt.config.js to dynamically get the backend VM IP address

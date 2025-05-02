@@ -202,16 +202,16 @@ EOFLOCAL
   echo "Copying ${WEB_JAR_PATH} to VM..."
   gcloud compute scp ${WEB_JAR_PATH} ${SSH_USER}@${VM_NAME}:~/ruoyi-web.jar --zone=${VM_ZONE}
   
-  # Create a setup script for Java and JAR files
-  echo "Creating setup script for Java and JAR files..."
+  # Create a setup script for Java, MariaDB, and JAR files
+  echo "Creating setup script for Java, MariaDB, and JAR files..."
   cat > setup-java.sh << 'EOFLOCAL'
 #!/bin/bash
 set -e
 
-# Install Java 11
-echo "Installing Java 11..."
+# Install Java 11 and MariaDB
+echo "Installing Java 11 and MariaDB..."
 sudo apt-get update
-sudo apt-get install -y openjdk-11-jdk
+sudo apt-get install -y openjdk-11-jdk mariadb-server
 
 # Find Java installation path
 JAVA_PATH=$(sudo update-alternatives --display java | grep -o '^/.*java$' | head -n1 | sed 's/bin\/java$//')
@@ -292,6 +292,18 @@ spring:
         enabled: false
 EOF"
 
+# Set up MariaDB
+echo "Setting up MariaDB..."
+sudo systemctl start mariadb
+sudo systemctl enable mariadb
+
+# Create database and user
+echo "Creating database and user..."
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS baicintl;"
+sudo mysql -e "CREATE USER IF NOT EXISTS 'ruoyi'@'localhost' IDENTIFIED BY 'Stellies21!@';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON baicintl.* TO 'ruoyi'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"
+
 # Create application-prod-admin.yml
 sudo bash -c "cat > /opt/baic/application-prod-admin.yml << EOF
 # Spring configuration
@@ -303,7 +315,7 @@ spring:
     druid:
       # Master database
       master:
-        url: jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+        url: jdbc:mysql://127.0.0.1:3306/baicintl?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
         username: ruoyi
         password: Stellies21!@
       # Slave database
@@ -380,7 +392,7 @@ spring:
     druid:
       # Master database
       master:
-        url: jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+        url: jdbc:mysql://127.0.0.1:3306/baicintl?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
         username: ruoyi
         password: Stellies21!@
       # Slave database
@@ -445,6 +457,16 @@ server:
   servlet:
     context-path: /home-api
 EOF"
+
+# Try to download and import the SQL file from Cloud Storage
+echo "Trying to download and import the SQL file from Cloud Storage..."
+gsutil cp gs://baic-sql-files-457613/baicintl_backup.sql /tmp/baicintl_backup.sql || echo "SQL file not found, skipping import"
+if [ -f /tmp/baicintl_backup.sql ]; then
+  echo "Importing SQL file..."
+  sed -i 's/utf8mb4_0900_ai_ci/utf8mb4_general_ci/g' /tmp/baicintl_backup.sql
+  sudo mysql baicintl < /tmp/baicintl_backup.sql || echo "Error importing SQL file, continuing anyway"
+  rm /tmp/baicintl_backup.sql
+fi
 
 # Update systemd service files to use the new configuration
 sudo bash -c "cat > /etc/systemd/system/baic-admin.service << EOF
