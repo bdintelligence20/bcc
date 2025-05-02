@@ -35,8 +35,8 @@ steps:
       - '-c'
       - |
         cd beiqi-service-master/beiqi-service-master
-        # Update the database connection in application-prod.yml
-        sed -i 's|jdbc:mysql:///ruoyi?cloudSqlInstance=.*&useSSL=false|jdbc:mysql:///ruoyi?cloudSqlInstance=baic-457613:us-central1:baic-mysql\&socketFactory=com.google.cloud.sql.mysql.SocketFactory\&user=ruoyi\&password=Stellies21!@\&useSSL=false|g' ruoyi-admin/src/main/resources/application-prod.yml
+        # Update the database connection in application-prod.yml to use direct connection
+        sed -i 's|jdbc:mysql:///ruoyi?cloudSqlInstance=.*&useSSL=false|jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true\&characterEncoding=utf8\&zeroDateTimeBehavior=convertToNull\&useSSL=false\&serverTimezone=GMT%2B8|g' ruoyi-admin/src/main/resources/application-prod.yml
         
         # Update the file upload path to use Cloud Storage
         if grep -q "profile:" ruoyi-admin/src/main/resources/application-prod.yml; then
@@ -80,8 +80,8 @@ steps:
       - '-c'
       - |
         cd beiqi-service-master/beiqi-service-master
-        # Update the database connection in application-prod.yml
-        sed -i 's|jdbc:mysql:///ruoyi?cloudSqlInstance=.*&useSSL=false|jdbc:mysql:///ruoyi?cloudSqlInstance=baic-457613:us-central1:baic-mysql\&socketFactory=com.google.cloud.sql.mysql.SocketFactory\&user=ruoyi\&password=Stellies21!@\&useSSL=false|g' ruoyi-web/src/main/resources/application-prod.yml
+        # Update the database connection in application-prod.yml to use direct connection
+        sed -i 's|jdbc:mysql:///ruoyi?cloudSqlInstance=.*&useSSL=false|jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true\&characterEncoding=utf8\&zeroDateTimeBehavior=convertToNull\&useSSL=false\&serverTimezone=GMT%2B8|g' ruoyi-web/src/main/resources/application-prod.yml
         
         # Update the file upload path to use Cloud Storage
         if grep -q "profile:" ruoyi-web/src/main/resources/application-prod.yml; then

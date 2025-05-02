@@ -19,8 +19,10 @@ steps:
       - |
         cp update-nuxt-config.sh beiqi-home-master/beiqi-home-master/
         cp update-plugins.sh beiqi-home-master/beiqi-home-master/
+        cp fix-api-calls.sh beiqi-home-master/beiqi-home-master/
         chmod +x beiqi-home-master/beiqi-home-master/update-nuxt-config.sh
         chmod +x beiqi-home-master/beiqi-home-master/update-plugins.sh
+        chmod +x beiqi-home-master/beiqi-home-master/fix-api-calls.sh
 
   # Deploy Frontend to App Engine
   - name: 'node:20'
@@ -46,6 +48,7 @@ steps:
         # Run the scripts to update the configuration
         ./update-plugins.sh
         ./update-nuxt-config.sh
+        ./fix-api-calls.sh
         
         # Install dependencies including the newly added ones
         npm install
