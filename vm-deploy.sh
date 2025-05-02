@@ -252,6 +252,46 @@ file /opt/baic/ruoyi-web.jar
 echo "Creating configuration files for database connection..."
 sudo mkdir -p /opt/baic/config
 
+# Create application-dev-admin.yml
+sudo bash -c "cat > /opt/baic/application-dev-admin.yml << EOF
+# Spring configuration
+spring:
+  # Database configuration
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      # Master database
+      master:
+        url: jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+        username: ruoyi
+        password: Stellies21!@
+      # Slave database
+      slave:
+        # Whether to enable slave database
+        enabled: false
+EOF"
+
+# Create application-dev-web.yml
+sudo bash -c "cat > /opt/baic/application-dev-web.yml << EOF
+# Spring configuration
+spring:
+  # Database configuration
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    druid:
+      # Master database
+      master:
+        url: jdbc:mysql://34.69.17.6:3306/ruoyi?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+        username: ruoyi
+        password: Stellies21!@
+      # Slave database
+      slave:
+        # Whether to enable slave database
+        enabled: false
+EOF"
+
 # Create application-prod-admin.yml
 sudo bash -c "cat > /opt/baic/application-prod-admin.yml << EOF
 # Spring configuration
@@ -418,7 +458,7 @@ User=root
 WorkingDirectory=/opt/baic
 Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"
 Environment=\"PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
-ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-admin.yml
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-admin.jar --spring.profiles.active=prod --spring.config.location=file:/opt/baic/application-prod-admin.yml
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/admin.log
@@ -439,7 +479,7 @@ User=root
 WorkingDirectory=/opt/baic
 Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"
 Environment=\"PATH=/usr/lib/jvm/java-11-openjdk-amd64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"
-ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod --spring.config.additional-location=file:/opt/baic/application-prod-web.yml
+ExecStart=/usr/bin/java -Xms1024m -Xmx2048m -jar /opt/baic/ruoyi-web.jar --spring.profiles.active=prod --spring.config.location=file:/opt/baic/application-prod-web.yml
 Restart=always
 RestartSec=10
 StandardOutput=file:/opt/baic/logs/web.log

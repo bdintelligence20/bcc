@@ -1,85 +1,105 @@
 # Simplified Deployment Guide for BAIC Global
 
-This guide provides a simplified approach to deploying the BAIC Global website and admin panel on Google Cloud Platform.
+This guide provides a straightforward approach to deploying the BAIC Global application to GitHub and Google Cloud Platform (GCP).
 
-## What's Been Fixed
+## Overview
 
-1. **Database Connection Issue**: The backend services were failing to connect to the MySQL database due to incorrect configuration. The error logs showed they were trying to connect to "localhost:3,306" (with a comma in the port number).
+The deployment process consists of the following steps:
 
-2. **Mixed Content Issues**: The admin panel was being served over HTTPS from App Engine, but it was trying to make API requests to an HTTP endpoint, which modern browsers block for security reasons.
+1. Initialize a GitHub repository and push the code
+2. Deploy the backend services to a GCP VM
+3. Deploy the frontend to GCP App Engine
+4. Connect the frontend to the backend
 
-3. **Frontend Configuration**: The frontend configuration has been updated to use relative URLs for API requests, which will work regardless of the protocol (HTTP or HTTPS).
+## Prerequisites
 
-## Deployment Steps - Just Push to GitHub!
+- GitHub account
+- GCP account with billing enabled
+- gcloud CLI installed and configured
+- Git installed
 
-All the fixes have been integrated into the Cloud Build configuration files. Now you can simply:
+## Step 1: Initialize GitHub Repository and Push Code
 
-1. Initialize a Git repository and push to GitHub:
-   ```bash
-   ./init-git-and-push.sh
-   ```
-   or on Windows:
-   ```bash
-   init-git-and-push.bat
-   ```
+1. Create a new GitHub repository
+2. Initialize the local repository and push the code:
 
-2. Set up Cloud Build triggers in the Google Cloud Console to automatically deploy when changes are pushed to GitHub:
-   - Create a trigger for the backend services using `cloudbuild-vm-backend.yaml`
-   - Create a trigger for the frontend using `cloudbuild-frontend.yaml`
-   - Create a trigger for the admin panel using `cloudbuild-admin.yaml`
+```bash
+# Run the initialization script
+chmod +x init-git-and-push.sh
+./init-git-and-push.sh
+```
 
-That's it! When you push changes to GitHub, Cloud Build will automatically:
-1. Deploy the backend services to the VM with the correct database configuration
-2. Deploy the frontend to App Engine
-3. Deploy the admin panel to App Engine
+## Step 2: Deploy Backend Services to GCP VM
 
-## What Changed
+1. Deploy the backend services to a VM using Cloud Build:
 
-### Backend Configuration
+```bash
+# Run the VM deployment script
+gcloud builds submit --config=cloudbuild-vm-backend.yaml
+```
 
-1. Updated the VM deployment script (`vm-deploy.sh`) to automatically:
-   - Create external configuration files with the correct database connection URL (34.69.17.6:3306)
-   - Update the systemd service files to use these external configuration files
-   - Restart the services with the new configuration
+This will:
+- Create a VM if it doesn't exist
+- Deploy the JAR files to the VM
+- Configure the services to run on startup
+- Set up the database connection
 
-### Admin Panel Configuration
+## Step 3: Deploy Frontend to GCP App Engine
 
-1. Updated the admin panel to use relative URLs for API requests ('/api' instead of 'http://34.42.200.5:8080/api')
-2. Added missing configuration for file uploads and other settings
+1. Deploy the frontend using Cloud Build:
 
-### Frontend Configuration
+```bash
+gcloud builds submit --config=cloudbuild-frontend.yaml
+```
 
-1. Updated the frontend proxy configuration to use relative URLs for API requests
-2. Added proper path rewriting to ensure requests are forwarded correctly
-3. Added a proxy for file uploads
+## Step 4: Verify and Fix Issues
 
-## Accessing the Application
+If you encounter any issues with the backend services, you can use the following scripts to diagnose and fix them:
 
-After deployment, the application will be available at:
+```bash
+# Check backend status
+chmod +x check-backend-status.sh
+./check-backend-status.sh
 
-- Frontend: `https://baic-457613.appspot.com/`
-- Admin Panel: `https://admin-panel-dot-baic-457613.uc.r.appspot.com/manage-panel-path/`
-- Backend API: `http://34.42.200.5:8080/api/`
-- Backend Home API: `http://34.42.200.5:8080/home-api/`
+# Fix backend VM services
+chmod +x fix-vm-services.sh
+./fix-vm-services.sh
+```
+
+## Key Changes Made
+
+1. **Fixed Database Connection**: Updated the service files to use `--spring.config.location` instead of `--spring.config.additional-location` to ensure that the external configuration files are properly loaded and take precedence over any embedded configuration.
+
+2. **Simplified Deployment Process**: Created scripts to automate the deployment process and fix any issues that might arise.
+
+3. **Direct Database Connection**: Updated the database connection URLs to use a direct connection to the database instead of the Cloud SQL socket factory.
 
 ## Troubleshooting
 
-If you encounter any issues:
+### Backend Issues
 
-1. Check the Cloud Build logs in the Google Cloud Console
+If you encounter issues with the backend services, you can use the following scripts to diagnose and fix them:
 
-2. Check the backend service logs on the VM:
-   ```bash
-   gcloud compute ssh baic-backend-vm --zone=us-central1-a
-   sudo journalctl -u baic-admin.service -f
-   sudo journalctl -u baic-web.service -f
-   ```
+```bash
+# Check backend status
+chmod +x check-backend-status.sh
+./check-backend-status.sh
 
-3. Check the application logs on the VM:
-   ```bash
-   gcloud compute ssh baic-backend-vm --zone=us-central1-a
-   sudo tail -f /opt/baic/logs/admin.log
-   sudo tail -f /opt/baic/logs/web.log
-   ```
+# Fix backend VM services
+chmod +x fix-vm-services.sh
+./fix-vm-services.sh
+```
 
-4. Check the App Engine logs in the Google Cloud Console
+### Frontend Issues
+
+If you encounter issues with the frontend, you can use the following script to fix API calls:
+
+```bash
+# Fix frontend API calls
+chmod +x fix-api-calls.sh
+./fix-api-calls.sh
+```
+
+## Conclusion
+
+This simplified approach to deploying the BAIC Global application to GitHub and GCP provides a straightforward and maintainable solution. By using GitHub for version control, a GCP VM for the backend services, and GCP App Engine for the frontend, you can achieve a reliable and scalable deployment.
