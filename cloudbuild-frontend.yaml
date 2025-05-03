@@ -24,7 +24,7 @@ steps:
         chmod +x beiqi-home-master/beiqi-home-master/update-plugins.sh
         chmod +x beiqi-home-master/beiqi-home-master/fix-api-calls.sh
 
-  # Deploy Frontend to App Engine
+  # Build Frontend
   - name: 'node:20'
     entrypoint: bash
     args:
@@ -57,12 +57,95 @@ steps:
         npm install --save @intlify/vue-i18n-loader@1.1.0
         npm run build
         
+  # Set up SSH for Cloud Build
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: bash
     args:
       - '-c'
       - |
+        # Set up SSH for Cloud Build
+        mkdir -p /root/.ssh
+        ssh-keygen -t rsa -f /root/.ssh/google_compute_engine -N "" -q
+        
+        # Add the SSH key to the VM's metadata
+        gcloud compute instances add-metadata baic-backend-vm --zone=us-central1-a --metadata="ssh-keys=cloudbuild:$(cat /root/.ssh/google_compute_engine.pub)"
+        
+        # Configure SSH to not check host keys
+        cat > /root/.ssh/config << EOF
+        Host *
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        EOF
+        chmod 600 /root/.ssh/config
+        
+        # Wait for SSH key propagation
+        sleep 30
+        
+  # Deploy to VM
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        # Create frontend directory on VM
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo mkdir -p /var/www/frontend"
+        
+        # Copy the built files to the VM
         cd beiqi-home-master/beiqi-home-master
-        gcloud app deploy app.yaml --quiet
+        tar -czf /tmp/frontend-dist.tar.gz .nuxt static nuxt.config.js package.json
+        gcloud compute scp /tmp/frontend-dist.tar.gz cloudbuild@baic-backend-vm:/tmp/ --zone=us-central1-a
+        
+        # Extract files on the VM and set up
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo tar -xzf /tmp/frontend-dist.tar.gz -C /var/www/frontend && sudo chown -R www-data:www-data /var/www/frontend"
+        
+        # Install Nginx if not already installed
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo apt-get update && sudo apt-get install -y nginx"
+        
+        # Create Nginx configuration for frontend
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo bash -c 'cat > /etc/nginx/sites-available/frontend << EOF
+        server {
+            listen 80;
+            server_name _;
+            
+            location / {
+                proxy_pass http://localhost:3000;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade \\\$http_upgrade;
+                proxy_set_header Connection \"upgrade\";
+                proxy_set_header Host \\\$host;
+                proxy_cache_bypass \\\$http_upgrade;
+            }
+            
+            location /api/ {
+                proxy_pass http://localhost:8080/api/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade \\\$http_upgrade;
+                proxy_set_header Connection \"upgrade\";
+                proxy_set_header Host \\\$host;
+                proxy_cache_bypass \\\$http_upgrade;
+            }
+            
+            location /home-api/ {
+                proxy_pass http://localhost:8080/home-api/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade \\\$http_upgrade;
+                proxy_set_header Connection \"upgrade\";
+                proxy_set_header Host \\\$host;
+                proxy_cache_bypass \\\$http_upgrade;
+            }
+        }
+        EOF'"
+        
+        # Enable the site
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo ln -sf /etc/nginx/sites-available/frontend /etc/nginx/sites-enabled/"
+        
+        # Install Node.js and PM2 if not already installed
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo apt-get install -y nodejs npm && sudo npm install -g pm2"
+        
+        # Start the Nuxt.js application with PM2
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="cd /var/www/frontend && sudo npm install && sudo pm2 restart frontend || sudo pm2 start npm --name 'frontend' -- start"
+        
+        # Restart Nginx
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo nginx -t && sudo systemctl restart nginx"
 
 timeout: 1800s
