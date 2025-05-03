@@ -108,7 +108,7 @@ steps:
             server_name _;
             
             location / {
-                proxy_pass http://localhost:3000;
+                proxy_pass http://localhost:8080;
                 proxy_http_version 1.1;
                 proxy_set_header Upgrade \\\$http_upgrade;
                 proxy_set_header Connection \"upgrade\";
@@ -139,11 +139,17 @@ steps:
         # Enable the site
         gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo ln -sf /etc/nginx/sites-available/frontend /etc/nginx/sites-enabled/"
         
-        # Install Node.js and PM2 if not already installed
-        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo apt-get install -y nodejs npm && sudo npm install -g pm2"
+        # Install Node.js 16 and PM2 if not already installed
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && sudo apt-get install -y nodejs && sudo npm install -g pm2"
+        
+        # Check Node.js version
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="node -v"
+        
+        # Rebuild the frontend application with the new Node.js version
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="cd /var/www/frontend && sudo npm rebuild"
         
         # Start the Nuxt.js application with PM2
-        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="cd /var/www/frontend && sudo npm install && sudo pm2 restart frontend || sudo pm2 start npm --name 'frontend' -- start"
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="cd /var/www/frontend && sudo npm install && sudo pm2 delete frontend || true && sudo pm2 start npm --name 'frontend' -- start"
         
         # Restart Nginx
         gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="sudo nginx -t && sudo systemctl restart nginx"

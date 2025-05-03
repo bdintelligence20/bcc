@@ -1,102 +1,113 @@
 # Frontend Fix Guide for BAIC Global
 
-This guide explains the changes made to fix the frontend connectivity issues with the backend services.
+This guide provides instructions for fixing issues with the frontend application on the VM.
 
-## Issues Fixed
+## Issue Description
 
-1. **API Request Prefixing**: The frontend was making requests to paths like `/website/webConfig/getWebConfig` directly, not to `/home-api/website/webConfig/getWebConfig` as it should. This was causing 404 errors because the backend services were expecting requests with the correct prefixes.
+The frontend application was failing to start due to compatibility issues with the Node.js version. The application uses the optional chaining operator (`?.`), which requires Node.js 14 or later. Additionally, the Nginx configuration was set up to proxy to port 3000, but the Nuxt.js application is actually listening on port 8080.
 
-2. **Proxy Configuration**: The proxy configuration in nuxt.config.js was missing pathRewrite settings, which are needed to ensure that requests are forwarded correctly to the backend services.
+## Fixes Implemented
 
-## Changes Made
+1. **Updated cloudbuild-frontend.yaml**:
+   - Added installation of Node.js 16 on the VM
+   - Updated Nginx configuration to proxy to port 8080 instead of port 3000
+   - Added steps to rebuild the frontend application with the new Node.js version
+   - Added proper cleanup and restart of the PM2 process
 
-### 1. Fixed axios.js Plugin
+2. **Created Fix Scripts**:
+   - `fix-frontend-vm.sh`: A script to fix the frontend issues directly on the VM
+   - `fix-frontend-cloud.sh`: A script to fix the frontend issues from Cloud Shell or any other environment with access to the VM
+   - `run-frontend-fix.sh`: A script to run the fix-frontend-vm.sh script on the VM
 
-The axios.js plugin was updated to correctly handle URL prefixing:
+## How to Fix the Frontend
 
-```javascript
-// Already has /home-api or /api or /geoip prefix
-if (config.url.startsWith('/home-api') || config.url.startsWith('/api') || config.url.startsWith('/geoip') || config.url.startsWith('/file')) {
-  // Do nothing, URL already has the correct prefix
-  if (config.url.startsWith('/home-api') || config.url.startsWith('/api')) {
-    config.headers['Authorization'] = getToken()
-  }
-} else {
-  // Add prefix based on URL type
-  if (isSubStringInArray(config.url, filterateUrl)) {
-    config.url = '/home-api' + config.url
-    config.headers['Authorization'] = getToken()
-  } else {
-    config.url = '/home-api' + config.url + '/' + i18n.locale
-  }
-}
-```
+### Option 1: Deploy with Updated Cloud Build Configuration
 
-This ensures that URLs are correctly prefixed with `/home-api` or `/api` before being sent to the backend.
-
-### 2. Updated nuxt.config.js Proxy Configuration
-
-The proxy configuration in nuxt.config.js was updated to include pathRewrite settings:
-
-```javascript
-proxy: {
-  '/home-api': {
-    target: 'http://34.42.200.5:8080',
-    changeOrigin: true,
-    pathRewrite: { '^/home-api': '/home-api' }
-  },
-  '/api': {
-    target: 'http://34.42.200.5:8080',
-    changeOrigin: true,
-    pathRewrite: { '^/api': '/api' }
-  },
-  '/geoip': {
-    target: 'http://34.42.200.5:8080',
-    changeOrigin: true,
-    pathRewrite: { '^/geoip': '/geoip' }
-  },
-  '/file': {
-    target: 'http://34.42.200.5:8080',
-    changeOrigin: true,
-    pathRewrite: { '^/file': '/file' }
-  }
-}
-```
-
-This ensures that requests are correctly forwarded to the backend services.
-
-### 3. Updated update-plugins.sh Script
-
-The update-plugins.sh script was updated to include the fixed axios.js plugin, ensuring that the fix is applied during deployment.
-
-## Deployment Steps
-
-1. Push the changes to GitHub:
-   ```bash
-   git add .
-   git commit -m "Fix frontend connectivity issues"
-   git push
-   ```
-
-2. Deploy the frontend using Cloud Build:
-   ```bash
-   gcloud builds submit --config=cloudbuild-frontend.yaml
-   ```
-
-3. Wait for the deployment to complete. The frontend will be available at:
-   ```
-   https://baic-457613.appspot.com/
-   ```
-
-## Verification
-
-After deployment, verify that the frontend is correctly connecting to the backend services:
-
-1. Open the frontend in a browser
-2. Check the browser's developer console for any API request errors
-3. Verify that the website is displaying data correctly
-
-If there are still issues, check the App Engine logs for more information:
+The simplest way to fix the frontend is to deploy it using the updated Cloud Build configuration:
 
 ```bash
-gcloud app logs tail -s default
+gcloud builds submit --config=cloudbuild-frontend.yaml
+```
+
+This will:
+1. Build the frontend application
+2. Deploy it to the VM
+3. Install Node.js 16 on the VM
+4. Configure Nginx to proxy to port 8080
+5. Rebuild the frontend application with the new Node.js version
+6. Start the frontend application with PM2
+
+### Option 2: Run the Fix Script from Cloud Shell
+
+If you don't want to redeploy the entire frontend, you can run the fix script from Cloud Shell:
+
+```bash
+chmod +x fix-frontend-cloud.sh
+./fix-frontend-cloud.sh
+```
+
+This will:
+1. Set up SSH access to the VM
+2. Create a fix script on the VM
+3. Run the fix script on the VM
+
+### Option 3: Run the Fix Script Directly on the VM
+
+If you have SSH access to the VM, you can run the fix script directly on the VM:
+
+```bash
+sudo bash -c "$(cat fix-frontend-vm.sh)"
+```
+
+This will:
+1. Upgrade Node.js to version 16
+2. Update the Nginx configuration
+3. Rebuild the frontend application
+4. Restart the frontend application
+
+## Verifying the Fix
+
+After applying the fix, you can verify that the frontend is working by:
+
+1. Checking if the frontend application is running:
+   ```bash
+   sudo pm2 status
+   ```
+
+2. Checking if the application is listening on port 8080:
+   ```bash
+   sudo netstat -tulpn | grep 8080
+   ```
+
+3. Accessing the frontend in a web browser:
+   ```
+   http://<VM-IP-ADDRESS>
+   ```
+
+## Troubleshooting
+
+If you encounter issues after applying the fix:
+
+1. Check the PM2 logs:
+   ```bash
+   sudo pm2 logs frontend
+   ```
+
+2. Check the Nginx error logs:
+   ```bash
+   sudo tail -n 100 /var/log/nginx/error.log
+   ```
+
+3. Check the Nginx configuration:
+   ```bash
+   sudo nginx -t
+   ```
+
+4. Restart the frontend application:
+   ```bash
+   sudo pm2 restart frontend
+   ```
+
+5. Restart Nginx:
+   ```bash
+   sudo systemctl restart nginx

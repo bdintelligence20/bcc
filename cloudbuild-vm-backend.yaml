@@ -265,8 +265,11 @@ steps:
     args:
       - '-c'
       - |
-        # Run updated deployment script
-        ./vm-deploy-updated.sh
+        # Make the fixed deployment script executable
+        chmod +x vm-deploy-fixed.sh
+        
+        # Run fixed deployment script with database connection fix
+        ./vm-deploy-fixed.sh
     timeout: 1800s  # 30 minutes
 
 timeout: 7200s  # 2 hours
