@@ -17,17 +17,17 @@ steps:
     args:
       - '-c'
       - |
-        VM_NAME="baic-backend-vm"
-        VM_ZONE="us-central1-a"
+        # VM configuration
+        # Hard-code zone to avoid substitution issues
         
         # Check if VM exists
-        echo "Checking if VM ${VM_NAME} exists..."
-        if gcloud compute instances describe ${VM_NAME} --zone=${VM_ZONE} &>/dev/null; then
-          echo "VM ${VM_NAME} exists."
+        echo "Checking if VM baic-backend-vm exists..."
+        if gcloud compute instances describe baic-backend-vm --zone=us-central1-a &>/dev/null; then
+          echo "VM baic-backend-vm exists."
         else
-          echo "VM ${VM_NAME} does not exist. Creating VM..."
-          gcloud compute instances create ${VM_NAME} \
-            --zone=${VM_ZONE} \
+          echo "VM baic-backend-vm does not exist. Creating VM..."
+          gcloud compute instances create baic-backend-vm \
+            --zone=us-central1-a \
             --machine-type=e2-standard-2 \
             --boot-disk-size=20GB \
             --image-family=debian-11 \
@@ -69,8 +69,8 @@ steps:
     args:
       - '-c'
       - |
-        # Create VM setup script
-        cat > /tmp/vm-setup.sh << 'EOF'
+        # Create VM setup script in current directory
+        cat > vm-setup.sh << 'EOF'
         #!/bin/bash
         # VM setup script for BAIC Global application
         
@@ -137,13 +137,7 @@ steps:
         sudo systemctl enable mariadb
         sudo systemctl start mariadb
         
-        # Create database and user
-        sudo mysql -e "CREATE DATABASE IF NOT EXISTS baicintl;"
-        sudo mysql -e "CREATE USER IF NOT EXISTS 'ruoyi'@'localhost' IDENTIFIED BY 'Stellies21!@';"
-        sudo mysql -e "GRANT ALL PRIVILEGES ON baicintl.* TO 'ruoyi'@'localhost';"
-        sudo mysql -e "FLUSH PRIVILEGES;"
-        
-        # Database is already imported, no need to import again
+        # Database and user already exist, no need to create or import
         
         # Configure firewall to allow HTTP and HTTPS traffic
         sudo apt-get install -y ufw
@@ -155,7 +149,7 @@ steps:
         
         echo "VM setup completed successfully!"
         EOF
-        chmod +x /tmp/vm-setup.sh
+        chmod +x vm-setup.sh
 
   # Copy and run VM setup script
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -164,7 +158,7 @@ steps:
       - '-c'
       - |
         # Copy VM setup script to VM
-        gcloud compute scp /tmp/vm-setup.sh cloudbuild@baic-backend-vm:/tmp/vm-setup.sh --zone=us-central1-a
+        gcloud compute scp vm-setup.sh cloudbuild@baic-backend-vm:/tmp/vm-setup.sh --zone=us-central1-a
         
         # Run VM setup script
         gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="chmod +x /tmp/vm-setup.sh && /tmp/vm-setup.sh"
@@ -245,7 +239,7 @@ steps:
     args:
       - '-c'
       - |
-        chmod +x vm-deploy.sh
+        chmod +x vm-deploy-updated.sh
         
         # Set up SSH for Cloud Build
         mkdir -p /root/.ssh
@@ -271,8 +265,8 @@ steps:
     args:
       - '-c'
       - |
-        # Run deployment script
-        ./vm-deploy.sh
+        # Run updated deployment script
+        ./vm-deploy-updated.sh
     timeout: 1800s  # 30 minutes
 
 timeout: 7200s  # 2 hours
