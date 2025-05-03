@@ -1,0 +1,171 @@
+steps:
+  # Build the Java applications
+  - name: 'maven:3.8-openjdk-8'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        cd beiqi-service-master/beiqi-service-master
+        mvn clean package -DskipTests
+
+  # Build the admin service Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/baic-admin:$COMMIT_SHA', '-f', 'Dockerfile.admin', '.']
+    dir: 'beiqi-service-master/beiqi-service-master'
+
+  # Build the web service Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/baic-web:$COMMIT_SHA', '-f', 'Dockerfile.web', '.']
+    dir: 'beiqi-service-master/beiqi-service-master'
+
+  # Push the images to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/baic-admin:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/baic-web:$COMMIT_SHA']
+
+  # Backup important data
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        # Set up SSH
+        mkdir -p /root/.ssh
+        ssh-keygen -t rsa -f /root/.ssh/google_compute_engine -N "" -q
+        gcloud compute instances add-metadata baic-backend-vm --zone=us-central1-a --metadata="ssh-keys=cloudbuild:$(cat /root/.ssh/google_compute_engine.pub)"
+        cat > /root/.ssh/config << EOF
+        Host *
+          StrictHostKeyChecking no
+          UserKnownHostsFile /dev/null
+        EOF
+        chmod 600 /root/.ssh/config
+        sleep 30
+
+        # Create a backup directory on the VM
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="
+          # Create backup directory
+          mkdir -p ~/baic-backup
+          
+          # Backup configuration files
+          sudo cp -r /opt/baic/application*.yml ~/baic-backup/ || true
+          sudo cp -r /opt/baic/application*.properties ~/baic-backup/ || true
+          
+          # Backup uploads directory if it exists
+          sudo cp -r /opt/baic/uploads ~/baic-backup/ || true
+          
+          # Set permissions
+          sudo chown -R \$(whoami):\$(whoami) ~/baic-backup
+        "
+
+  # Create docker-compose.yml on the VM
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        # Create docker-compose.yml
+        cat > docker-compose.yml << EOF
+        version: '3'
+        services:
+          admin-service:
+            image: gcr.io/$PROJECT_ID/baic-admin:$COMMIT_SHA
+            ports:
+              - "8080:8080"
+            environment:
+              - SPRING_DATASOURCE_URL=jdbc:mysql://127.0.0.1:3306/baicintl?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+              - SPRING_DATASOURCE_USERNAME=ruoyi
+              - SPRING_DATASOURCE_PASSWORD=Stellies21!@
+              - SPRING_PROFILES_ACTIVE=prod
+              - SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING=true
+            volumes:
+              - /opt/baic/uploads:/app/uploads
+            network_mode: "host"
+            restart: always
+
+          web-service:
+            image: gcr.io/$PROJECT_ID/baic-web:$COMMIT_SHA
+            ports:
+              - "8081:8080"
+            environment:
+              - SPRING_DATASOURCE_URL=jdbc:mysql://127.0.0.1:3306/baicintl?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8
+              - SPRING_DATASOURCE_USERNAME=ruoyi
+              - SPRING_DATASOURCE_PASSWORD=Stellies21!@
+              - SPRING_PROFILES_ACTIVE=prod
+              - SPRING_MAIN_ALLOW_BEAN_DEFINITION_OVERRIDING=true
+            volumes:
+              - /opt/baic/uploads:/app/uploads
+            network_mode: "host"
+            restart: always
+        EOF
+
+        # Copy docker-compose.yml to the VM
+        gcloud compute scp docker-compose.yml cloudbuild@baic-backend-vm:~/docker-compose.yml --zone=us-central1-a
+
+  # Install Docker and deploy on the VM
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        # Run commands on the VM to clean up existing services, install Docker, and deploy
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="
+          # Stop and disable existing services
+          sudo systemctl stop baic-admin || true
+          sudo systemctl stop baic-web || true
+          sudo systemctl disable baic-admin || true
+          sudo systemctl disable baic-web || true
+          
+          # Remove service files
+          sudo rm -f /etc/systemd/system/baic-admin.service || true
+          sudo rm -f /etc/systemd/system/baic-web.service || true
+          sudo systemctl daemon-reload
+          
+          # Clean up any existing Java processes
+          sudo pkill -f 'ruoyi-admin.jar' || true
+          sudo pkill -f 'ruoyi-web.jar' || true
+          
+          # Install Docker if not already installed
+          if ! command -v docker &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y docker.io docker-compose
+            sudo systemctl enable docker
+            sudo systemctl start docker
+            sudo usermod -aG docker \$USER
+          fi
+
+          # Configure Docker to use GCR
+          sudo gcloud auth configure-docker --quiet
+
+          # Deploy with Docker Compose
+          cd ~
+          sudo docker-compose down || true
+          sudo docker-compose up -d
+          
+          # Create uploads directory if it doesn't exist
+          sudo mkdir -p /opt/baic/uploads
+          sudo chmod -R 777 /opt/baic/uploads
+        "
+
+  # Verify deployment
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        # Check if the containers are running
+        gcloud compute ssh cloudbuild@baic-backend-vm --zone=us-central1-a --command="
+          echo 'Checking Docker containers...'
+          sudo docker ps
+          
+          echo 'Checking container logs...'
+          sudo docker logs \$(sudo docker ps -q --filter 'name=baic-docker_admin-service') || true
+          sudo docker logs \$(sudo docker ps -q --filter 'name=baic-docker_web-service') || true
+        "
+
+images:
+  - 'gcr.io/$PROJECT_ID/baic-admin:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/baic-web:$COMMIT_SHA'
+
+timeout: 3600s
